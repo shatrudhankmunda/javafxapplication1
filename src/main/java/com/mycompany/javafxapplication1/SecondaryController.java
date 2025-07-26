@@ -126,11 +126,11 @@ public class SecondaryController {
             data = myObj.getDataFromTable();
             TableColumn user = new TableColumn("User");
         user.setCellValueFactory(
-        new PropertyValueFactory<>("username"));
+        new PropertyValueFactory<>("user"));
 
         TableColumn pass = new TableColumn("Pass");
         pass.setCellValueFactory(
-            new PropertyValueFactory<>("password"));
+            new PropertyValueFactory<>("pass"));
         dataTableView.setItems(data);
         dataTableView.getColumns().addAll(user, pass);
         } catch (ClassNotFoundException ex) {

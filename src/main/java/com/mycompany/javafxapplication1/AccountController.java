@@ -13,6 +13,7 @@ import static com.mycompany.javafxapplication1.ScpTo.Numberofchunks;
 import java.io.IOException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -66,7 +67,7 @@ public class AccountController {
     @FXML
     private Button backButton;
         
-
+    private static final Logger logger = Logger.getLogger(AccountController.class.getName());
      
      
      
@@ -189,7 +190,7 @@ public class AccountController {
         if (old.equals(getpass) && newpass.equals(retyp) && !newpass.equals(getpass)) {
             Log.addLog("User " + getuser_ + " Changed Password", "log");
             myobj.updateField("password",myobj.hashPassword(newpass), getuser_,"username");
-            SessionManager.getInstance().login(username, newpass);
+            SessionManager.getInstance().login(getuser_, newpass);
             namechangefield.clear();
             namechangefield2.clear();
             changepass1.clear();
@@ -208,34 +209,44 @@ public class AccountController {
     private void deleteAccountBtnHandler(ActionEvent event) throws ClassNotFoundException, InvalidKeySpecException, IOException {
         String getuser_ = SessionManager.getInstance().getCurrentUser();
         String getpass = SessionManager.getInstance().getPassword();
-        String newName = namechangefield.getText(); // Get the new username from the text field
-        String enteredPassword = namechangefield2.getText();
-        if (newName == null || newName.trim().isEmpty()) {
+        String username = delacctname.getText();
+        String pass = delacctpass.getText();
+        if (username == null || username.trim().isEmpty()) {
             edialogue("Invalid Input", "Username cannot be empty");
             return;
         }
-        if (enteredPassword == null || enteredPassword.trim().isEmpty()) {
+        if (pass == null || pass.trim().isEmpty()) {
             edialogue("Invalid Input", "Password cannot be empty");
             return;
         }
-        String username = delacctname.getText(); 
-        String pass = delacctpass.getText(); 
-        DB myobj = new DB("Users");
-        DB files = new DB("fileInfo");
-        DB Log = new DB("appLogs");
 
-        if (getuser_.equals(username) && getpass.equals(pass)) {
-            Log.addLog("User " + getuser_ + " Account was deleted", "log");
-            List<String> filesToDelete = files.getFilesToDelete2(username);
-            for (String fileName : filesToDelete) {
-            Delete(fileName);         
+        // Show confirmation dialog before deleting
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Delete Account");
+        alert.setHeaderText("Are you sure you want to delete your account?");
+        alert.setContentText("This action cannot be undone.");
+
+        java.util.Optional<javafx.scene.control.ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == javafx.scene.control.ButtonType.OK) {
+            DB myobj = new DB("Users");
+            DB files = new DB("fileInfo");
+            DB Log = new DB("appLogs");
+
+            if (getuser_.equals(username) && getpass.equals(pass)) {
+                Log.addLog("User " + getuser_ + " Account was deleted", "log");
+                List<String> filesToDelete = files.getFilesToDelete2(username);
+                for (String fileName : filesToDelete) {
+                    Delete(fileName);
+                }
+                myobj.deleteUser(username);
+                dialogue("ACCOUNT DELETED", "Successful!");
+                logger.info("LOGOUT: " + SessionManager.getInstance().getCurrentUser());
+                SessionStore.saveLogout(SessionManager.getInstance().getCurrentUser());
+                SessionManager.getInstance().logout();
+                switchToPrimary();
+            } else {
+                edialogue("ACCOUNT NOT DELETED", "Please try again with the correct Username and password");
             }
-            myobj.deleteUser(username);
-            dialogue("ACCOUNT DELETED", "Successful!");
-            switchToPrimary();
-        }
-        else{
-        edialogue("ACCOUNT NOT DELETED", "Please try again with the correct Username and password");
         }
     }
     
@@ -243,31 +254,27 @@ public class AccountController {
     
     @FXML
     private void switchToPrimary(){
-        Stage secondaryStage = new Stage();
-        Stage primaryStage = (Stage) confirm3.getScene().getWindow();
+
+        Stage stage = (Stage) confirm3.getScene().getWindow();
         try {
-            
-        
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(getClass().getResource("primary.fxml"));
+            loader.setLocation(getClass().getResource("Login.fxml"));
             Parent root = loader.load();
             Scene scene = new Scene(root, 640, 480);
-            secondaryStage.setScene(scene);
-            secondaryStage.setTitle("Login");
-            secondaryStage.show();
-            primaryStage.close();
-
+            stage.setScene(scene);
+            stage.setTitle("Login user");
+            stage.show();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
     private void Delete(String name) throws IOException, ClassNotFoundException {
         DB myObj = new DB("fileInfo");
-        String[] chunkIds = myObj.getChunkIds(name, PrimaryController.username_.getUsername());
+        String[] chunkIds = myObj.getChunkIds(name, SessionManager.getInstance().getCurrentUser());
         for(int i = 1; i <= Numberofchunks; i++){
         ScpTo.dockerConnect("","Vchunk" + chunkIds[i-1] + ".bin", Containers[i-1], "delete");
         }
-        myObj.deleteRecord("fileName_",name,username_.getUsername());
+        myObj.deleteRecord("fileName_",name,SessionManager.getInstance().getCurrentUser());
     }
 
   

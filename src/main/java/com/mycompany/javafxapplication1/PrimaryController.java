@@ -39,7 +39,7 @@ public class PrimaryController {
             List<String> filesToDelete = fileDatabaseHandler.getFilesToDelete();
             for (String fileName : filesToDelete) {
             Delete(fileName);         
-            Log.addLog("File: " + fileName + " Was deleted from "+ username_.getUsername() + " Recently deleted folder", "log");
+            Log.addLog("File: " + fileName + " Was deleted from "+ SessionManager.getInstance().getCurrentUser() + " Recently deleted folder", "log");
             }
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(getClass().getResource("register.fxml"));
@@ -70,7 +70,7 @@ public class PrimaryController {
                 List<String> filesToDelete = fileDatabaseHandler.getFilesToDelete();
                 for (String fileName : filesToDelete) {
                 Delete(fileName);         
-                Log.addLog("File: " + fileName + " Was deleted from "+ username_.getUsername() + " Recently deleted folder", "log");
+                Log.addLog("File: " + fileName + " Was deleted from "+ SessionManager.getInstance().getCurrentUser() + " Recently deleted folder", "log");
                  }
                 loader.setLocation(getClass().getResource("secondary.fxml"));
                 Parent root = loader.load();
@@ -94,10 +94,10 @@ public class PrimaryController {
     }
       private void Delete(String name) throws IOException, ClassNotFoundException {
         DB myObj = new DB("fileInfo");
-        String[] chunkIds = myObj.getChunkIds(name, PrimaryController.username_.getUsername());
+        String[] chunkIds = myObj.getChunkIds(name, SessionManager.getInstance().getCurrentUser());
         for(int i = 1; i <= Numberofchunks; i++){
         ScpTo.dockerConnect("","Vchunk" + chunkIds[i-1] + ".bin", Containers[i-1], "delete");
         }
-        myObj.deleteRecord("fileName_",name,username_.getUsername());
+        myObj.deleteRecord("fileName_",name,SessionManager.getInstance().getCurrentUser());
     }
 }

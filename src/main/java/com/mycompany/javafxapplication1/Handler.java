@@ -83,7 +83,7 @@ public class Handler {
         String directoryPath = pathToCreated;
         
         // Combine the directory path and the file name
-        String filePath = directoryPath + name;
+        String filePath = directoryPath +File.separator + name;
         
         File myObj = new File(filePath);
         try {

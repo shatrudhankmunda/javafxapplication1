@@ -25,6 +25,8 @@ public class LoginController {
     private TextField usernameField;
     @FXML
     private PasswordField passwordField;
+    
+   public static User username_;
 
     @FXML
     private void handleLogin(ActionEvent event) throws Exception {
@@ -41,6 +43,7 @@ public class LoginController {
            }
            DB userDB = new DB("Users");
            if (userDB.validateUser(username, password)) {
+               username_ = new User(username, password);
                SessionManager.getInstance().login(username, password);
                SessionStore.saveLogin(username);
                logger.info("LOGIN: " + username + " logged in.");
@@ -88,7 +91,7 @@ public class LoginController {
     }
     private void delete(String name) throws IOException, ClassNotFoundException {
         DB myObj = new DB("fileInfo");
-        String[] chunkIds = myObj.getChunkIds(name, PrimaryController.username_.getUsername());
+        String[] chunkIds = myObj.getChunkIds(name, SessionManager.getInstance().getCurrentUser());
         for(int i = 1; i <= Numberofchunks; i++){
             ScpTo.dockerConnect("","Vchunk" + chunkIds[i-1] + ".bin", Containers[i-1], "delete");
         }
