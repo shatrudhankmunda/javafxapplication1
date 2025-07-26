@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.javafxapplication1.AccountController">
+   <children>
+      <Label layoutX="464.0" layoutY="18.0" text="Logged in as:" />
+      <Text fx:id="fileText" layoutX="465.0" layoutY="45.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Username" />
+      <PasswordField fx:id="oldpass" layoutX="389.0" layoutY="153.0" promptText="Old password" />
+      <Label layoutX="389.0" layoutY="125.0" text="CHANGE PASSWORD" />
+      <PasswordField fx:id="changepass1" layoutX="389.0" layoutY="191.0" promptText="New password" />
+      <PasswordField fx:id="repass" layoutX="389.0" layoutY="232.0" promptText="Retype  Newpassword" />
+      <Label layoutX="14.0" layoutY="130.0" text="CHANGE USERNAME" />
+      <TextField fx:id="namechangefield" layoutX="17.0" layoutY="159.0" promptText="New Username" />
+      <PasswordField fx:id="namechangefield2" layoutX="17.0" layoutY="198.0" promptText="Password" />
+      <Button fx:id="confirm" layoutX="17.0" layoutY="240.0" mnemonicParsing="false" onAction="#chnageUserNameHandler" text="Confirm" />
+      <Button fx:id="confirm2" layoutX="490.0" layoutY="272.0" mnemonicParsing="false" onAction="#chnageUserpasswordHandler" text="Confirm" />
+      <Label layoutX="218.0" layoutY="323.0" text="DELETE ACCOUNT" />
+      <TextField fx:id="delacctname" layoutX="22.0" layoutY="355.0" promptText="Username" />
+      <PasswordField fx:id="delacctpass" layoutX="224.0" layoutY="355.0" promptText="Password" />
+      <Button fx:id="confirm3" layoutX="429.0" layoutY="355.0" mnemonicParsing="false" onAction="#deleteAccountBtnHandler" text="DELETE ACCOUNT" textFill="RED" />
+      <Button fx:id="backButton" layoutX="17.0" layoutY="14.0" mnemonicParsing="false" onAction="#Backbuttonahndler" text="&lt;" />
+   </children>
+</AnchorPane>
