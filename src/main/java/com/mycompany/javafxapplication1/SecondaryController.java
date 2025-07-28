@@ -1,11 +1,16 @@
 package com.mycompany.javafxapplication1;
 
+import static com.mycompany.javafxapplication1.FilemanagerController.edialogue;
 import static com.mycompany.javafxapplication1.FilemanagerController.pathToCreated;
 import java.io.File;
+import java.time.LocalTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -13,8 +18,9 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
-
+import javafx.util.Duration;
 
 
 public class SecondaryController {
@@ -42,9 +48,53 @@ public class SecondaryController {
     
     @FXML
     private Button accountbtn;
-    
+
+    @FXML
+    private Label syncStatusLabel;
+
+    @FXML
+    private AnchorPane rootPane;
+
+    private static final long TIMEOUT_MILLIS = 5 * 60 * 1000;
 
     private static final Logger logger = Logger.getLogger(SecondaryController.class.getName());
+
+    private void setupUserActivityListeners() {
+        rootPane.setOnMouseMoved(e -> SessionManager.getInstance().updateActivity());
+        rootPane.setOnKeyPressed(e -> SessionManager.getInstance().updateActivity());
+    }
+
+    public void startAutoLogoutTimer() throws Exception{
+        Timeline checker = new Timeline(
+                new KeyFrame(Duration.seconds(30), e -> {
+                    SessionManager session = SessionManager.getInstance();
+                    if (!session.isSessionActive(TIMEOUT_MILLIS)) {
+                        String user = session.getCurrentUser();
+                        if (user != null) {
+                            logger.info("SESSION TIMEOUT: " + user);
+                        }
+                        session.logout();
+
+                        try {
+                            Stage stage = new Stage();
+                            FXMLLoader loader = new FXMLLoader();
+                            loader.setLocation(getClass().getResource("Login.fxml"));
+                            Parent root = loader.load();
+                            Scene scene = new Scene(root, 640, 480);
+                            stage.setScene(scene);
+                            LoginController controller = loader.getController();
+                            stage.setTitle("User Login");
+                            stage.show();
+                        } catch (Exception ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    }
+                })
+        );
+        checker.setCycleCount(Timeline.INDEFINITE);
+        checker.play();
+    }
+
 
     @FXML
     private void terminalbtnHandler(ActionEvent event){
@@ -62,7 +112,34 @@ public class SecondaryController {
         }
         
     };
-    
+    @FXML
+    private void handleSyncNow() {
+        syncStatusLabel.setText("Syncing...");
+        try{
+            if(MySQLDB.getConnection()==null){
+                edialogue("Sync Failed !!", "MySQL Cloud is Down !!");
+                syncStatusLabel.setText("Not Synced");
+                return;
+            }
+            Task<Void> syncTask = new Task<>() {
+                @Override
+                protected Void call() {
+                    SyncService.syncAll();
+                    return null;
+                }
+            };
+
+            syncTask.setOnSucceeded(e -> {
+                syncStatusLabel.setText("Sync completed at " + LocalTime.now().withNano(0));
+                // fileController.refreshFileList();
+            });
+
+            new Thread(syncTask).start();
+        }catch (Exception e){
+            edialogue("",e.getMessage());
+            logger.log(Level.SEVERE,"Error: " + e.getMessage());
+        }
+    }
     @FXML
     private void accountbtnHandler(ActionEvent event){
         
@@ -118,7 +195,25 @@ public class SecondaryController {
         }
     }
 
-    public void initialise() {
+    public void initialiseSession() throws Exception{
+        SessionManager session = SessionManager.getInstance();
+        String username = session.getCurrentUser();
+        if (username != null) {
+            session.updateActivity();
+            setupUserActivityListeners();
+            startAutoLogoutTimer();
+        } else {
+            Stage stage = new Stage();
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(getClass().getResource("Login.fxml"));
+            Parent root = loader.load();
+            Scene scene = new Scene(root, 640, 480);
+            stage.setScene(scene);
+            LoginController controller = loader.getController();
+            stage.setTitle("User Login");
+            stage.show();
+
+        }
         userTextField.setText(SessionManager.getInstance().getCurrentUser());
         DB myObj = new DB("Users");
         ObservableList<User> data;

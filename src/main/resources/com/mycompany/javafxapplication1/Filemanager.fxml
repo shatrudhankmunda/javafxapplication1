@@ -7,22 +7,22 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane id="AnchorPane" prefHeight="475.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.javafxapplication1.FilemanagerController">
+<AnchorPane id="AnchorPane" prefHeight="475.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.javafxapplication1.FilemanagerController">
    <children>
-      <Button fx:id="uploadBtn" layoutX="280.0" layoutY="438.0" mnemonicParsing="false" onAction="#uploadButtonHandler" text="Upload" />
-      <TextField fx:id="fileNameinput" layoutX="215.0" layoutY="109.0" promptText="Enter file name" />
-      <Button fx:id="createbtn" layoutX="215.0" layoutY="80.0" mnemonicParsing="false" onAction="#createButtonHandler" text="Create File" />
-      <Button fx:id="updatebtn" layoutX="10.0" layoutY="184.0" mnemonicParsing="false" onAction="#UpdateButtonHandler" text="Update" />
-      <Button fx:id="selectBtn" layoutX="14.0" layoutY="80.0" mnemonicParsing="false" onAction="#selectBtnHandler" text="Select Local File" />
-      <TextArea fx:id="output" layoutX="87.0" layoutY="184.0" prefHeight="248.0" prefWidth="257.0" />
-      <Label layoutX="167.0" layoutY="84.0" text="OR" />
-      <Button fx:id="selectCloudBtn" layoutX="451.0" layoutY="80.0" mnemonicParsing="false" onAction="#selectCloudBtnHandlerlocal" text="Select Cloud File" />
+      <Button fx:id="uploadBtn" layoutX="229.0" layoutY="438.0" mnemonicParsing="false" onAction="#uploadButtonHandler" prefHeight="26.0" prefWidth="72.0" text="Upload" />
+      <Button fx:id="createbtn" layoutX="187.0" layoutY="71.0" mnemonicParsing="false" onAction="#createButtonHandler" prefHeight="26.0" prefWidth="112.0" text="Create New File" />
+      <Button fx:id="updatebtn" layoutX="127.0" layoutY="438.0" mnemonicParsing="false" onAction="#UpdateButtonHandler" prefHeight="26.0" prefWidth="72.0" text="Update" />
+      <Button fx:id="selectBtn" layoutX="26.0" layoutY="71.0" mnemonicParsing="false" onAction="#selectBtnHandler" prefHeight="26.0" prefWidth="129.0" text="Select Local File" />
+      <TextArea fx:id="output" layoutX="26.0" layoutY="177.0" prefHeight="248.0" prefWidth="276.0" />
+      <Label layoutX="163.0" layoutY="75.0" text="OR" />
+      <Button fx:id="selectCloudBtn" layoutX="408.0" layoutY="79.0" mnemonicParsing="false" onAction="#selectCloudBtnHandlerlocal" prefHeight="26.0" prefWidth="150.0" text="Select Cloud File" />
       <TextField fx:id="cloudinput" layoutX="409.0" layoutY="109.0" promptText="Enter Cloud file name" />
-      <Label layoutX="376.0" layoutY="84.0" text="OR" />
-      <TableView fx:id="dataTableView" layoutX="372.0" layoutY="184.0" prefHeight="200.0" prefWidth="206.0" />
-      <Button fx:id="filemanagerextended" layoutX="323.0" layoutY="14.0" mnemonicParsing="false" onAction="#switchToFilemanagerExtended" text="File sharing | Downloading | Deleting" />
+      <TableView fx:id="dataTableView" layoutX="365.0" layoutY="177.0" onMouseClicked="#handleRowClicked" prefHeight="239.0" prefWidth="206.0" />
+      <Button fx:id="filemanagerextended" layoutX="357.0" layoutY="14.0" mnemonicParsing="false" onAction="#switchToFilemanagerExtended" prefHeight="26.0" prefWidth="216.0" text="File sharing | Downloading | Deleting" />
       <Button fx:id="backButton" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" onAction="#Backbuttonahndler" text="&lt;" />
-      <Button fx:id="readbtn" layoutX="87.0" layoutY="438.0" mnemonicParsing="false" onAction="#readFileButtonHandler" text="Read" />
-      <Label layoutX="92.0" layoutY="168.0" text="CLICK UPDATE TO WRITE INTO FILES  " />
+      <Button fx:id="readbtn" layoutX="26.0" layoutY="438.0" mnemonicParsing="false" onAction="#readFileButtonHandler" prefHeight="26.0" prefWidth="72.0" text="Read" />
+      <Label layoutX="26.0" layoutY="146.0" text="CLICK UPDATE TO WRITE INTO FILES  " />
+      <TextField fx:id="newfileInput" layoutX="190.0" layoutY="109.0" prefHeight="26.0" prefWidth="112.0" promptText="Enter file name" />
+      <Label fx:id="localFileLabel" layoutX="25.0" layoutY="106.0" prefHeight="26.0" prefWidth="130.0" text="No local file selected" />
    </children>
 </AnchorPane>

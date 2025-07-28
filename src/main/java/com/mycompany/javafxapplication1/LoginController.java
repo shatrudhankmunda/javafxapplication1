@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import static com.mycompany.javafxapplication1.FilemanagerController.Containers;
-import static com.mycompany.javafxapplication1.ScpTo.Numberofchunks;
+import static com.mycompany.javafxapplication1.ScpTo.numberOfChunks;
 
 public class LoginController {
     private static final Logger logger = Logger.getLogger(LoginController.class.getName());
@@ -29,7 +29,7 @@ public class LoginController {
    public static User username_;
 
     @FXML
-    private void handleLogin(ActionEvent event) throws Exception {
+    private void handleLogin(ActionEvent event) {
        try{
            String username = usernameField.getText();
            String password = passwordField.getText();
@@ -61,7 +61,7 @@ public class LoginController {
                Stage secondaryStage = new Stage();
                secondaryStage.setScene(scene);
                SecondaryController controller = loader.getController();
-               controller.initialise();
+               controller.initialiseSession();
                secondaryStage.setTitle("Show Users");
                String msg="some data sent from Primary Controller";
                secondaryStage.setUserData(msg);
@@ -92,7 +92,7 @@ public class LoginController {
     private void delete(String name) throws IOException, ClassNotFoundException {
         DB myObj = new DB("fileInfo");
         String[] chunkIds = myObj.getChunkIds(name, SessionManager.getInstance().getCurrentUser());
-        for(int i = 1; i <= Numberofchunks; i++){
+        for(int i = 1; i <= numberOfChunks; i++){
             ScpTo.dockerConnect("","Vchunk" + chunkIds[i-1] + ".bin", Containers[i-1], "delete");
         }
         myObj.deleteRecord("fileName_",name,SessionManager.getInstance().getCurrentUser());

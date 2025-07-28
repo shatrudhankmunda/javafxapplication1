@@ -23,7 +23,7 @@
       <Button fx:id="recover" layoutX="471.0" layoutY="352.0" mnemonicParsing="false" onAction="#recoverBtnHandler" text="Recover File" textFill="RED" />
       <ProgressIndicator fx:id="progressIndicator2" layoutX="250.0" layoutY="147.0" visible="false" />
       <Button fx:id="refreshbtnred" layoutX="520.0" layoutY="45.0" mnemonicParsing="false" onAction="#refreashBtnHandler" text="refresh" />
-      <TableView fx:id="dataTableView" layoutX="210.0" layoutY="91.0" prefHeight="245.0" prefWidth="164.0" />
+      <TableView fx:id="dataTableView" onMouseClicked="#handleTableData" layoutX="210.0" layoutY="91.0" prefHeight="245.0" prefWidth="164.0" />
       <TableView fx:id="dataTableView2" layoutX="414.0" layoutY="91.0" prefHeight="245.0" prefWidth="164.0" />
    </children>
 </AnchorPane>

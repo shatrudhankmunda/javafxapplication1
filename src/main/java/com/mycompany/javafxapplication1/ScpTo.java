@@ -4,8 +4,6 @@ import com.jcraft.jsch.*;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 
-import java.util.Scanner;
-
 public class ScpTo {
     private static final String
             USERNAME = "root";
@@ -13,7 +11,7 @@ public class ScpTo {
     private static final int REMOTE_PORT = 22;
     private static final int SESSION_TIMEOUT = 10000;
     private static final int CHANNEL_TIMEOUT = 5000;
-    public static  int Numberofchunks = 4;
+    public static final  int numberOfChunks = 4;
 
 
     public static void dockerConnect(String localFile, String remoteFile, String remoteHost, String Process) {

@@ -56,8 +56,8 @@ public class TerminalController {
             Scene scene = new Scene(root, 640, 480);
             secondaryStage.setScene(scene);
             SecondaryController controller = loader.getController();
-            controller.initialise();
-            secondaryStage.setTitle("Secondary view");
+            controller.initialiseSession();
+            secondaryStage.setTitle("Dashboard");
             secondaryStage.show();
             primaryStage.close();
 

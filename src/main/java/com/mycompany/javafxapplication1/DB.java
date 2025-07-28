@@ -258,7 +258,26 @@ public class DB {
 
 
 
-
+    public ObservableList<Map<String, String>> getExistingFileNames() throws ClassNotFoundException {
+        ObservableList<Map<String, String>> result = FXCollections.observableArrayList();
+        try {
+            Class.forName("org.sqlite.JDBC");
+            connection = DriverManager.getConnection(fileName);
+            String sql = "SELECT DISTINCT fileName_ FROM " + dataBaseTableName + " WHERE Status = 'Exists'";
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    while (resultSet.next()) {
+                        Map<String, String> fileInfoMap = new HashMap<>();
+                        fileInfoMap.put("fileName_", resultSet.getString("fileName_"));
+                        result.add(fileInfoMap);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(DB.class.getName()).log(Level.SEVERE, e.getMessage(), e);
+        }
+        return result;
+    }
 
 
     /**
@@ -266,11 +285,13 @@ public class DB {
      * @brief get data from the Database method
      * @return results as ObservableList<Map<String, String>>
      */
+
     public ObservableList<Map<String, String>> getDataFromTable2(String x) throws ClassNotFoundException {
         ObservableList<Map<String, String>> result = FXCollections.observableArrayList();
         try {
             Class.forName("org.sqlite.JDBC");
             connection = DriverManager.getConnection(fileName);
+
 
             // Use a PreparedStatement for better handling of parameters and to prevent SQL injection
             String sql = "SELECT * FROM " + this.dataBaseTableName + " WHERE userName = ? AND Status = 'Exists'";
@@ -389,6 +410,24 @@ public class DB {
         return chunkIds;
     }
 
+    public boolean doesFileNameExist(String fileName) throws ClassNotFoundException {
+        List<Map<String, String>> result = new ArrayList<>();
+        try {
+            Class.forName("org.sqlite.JDBC");
+            connection = getConnection();
+            String sql = "SELECT COUNT(*) FROM fileInfo WHERE fileName_ = ? AND  Status != 'Deleted'";
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                 statement.setString(1, fileName);
+                ResultSet rs = statement.executeQuery();
+                if (rs.next() && rs.getInt(1) > 0) {
+                    return true;
+                }
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(DB.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
+        }
+        return false;
+    }
 
     public boolean doesItemExist(String columnName, String itemName, String username, String field) throws ClassNotFoundException {
         boolean exists = false;
@@ -398,7 +437,7 @@ public class DB {
             connection = DriverManager.getConnection(fileName);
 
             // Use a PreparedStatement for better handling of parameters and to prevent SQL injection
-            String sql = "SELECT COUNT(*) FROM " + dataBaseTableName + " WHERE " + columnName + " = ? AND " + field + "= ?";
+            String sql = "SELECT COUNT(*) FROM " + dataBaseTableName + " WHERE " + columnName + " = ? AND " + field + "= ?" ;
 
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, itemName);
@@ -457,6 +496,34 @@ public class DB {
             } catch (SQLException e) {
                 System.err.println(e.getMessage());
             }
+        }
+
+        return exists;
+    }
+
+    public boolean doesACLExistRW(String userName, String fileName_) throws ClassNotFoundException {
+        boolean exists = false;
+
+        try {
+            Class.forName("org.sqlite.JDBC");
+            connection = DriverManager.getConnection(fileName);
+
+            // Use a PreparedStatement for better handling of parameters and to prevent SQL injection
+            String sql = "SELECT COUNT(*) FROM " + dataBaseTableName + " WHERE ACL = 'RW' AND userName = ? AND fileName_ = ?";
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, userName);
+                statement.setString(2, fileName_);
+
+                ResultSet rs = statement.executeQuery();
+
+                // Check if any rows are returned (count > 0 means the item exists)
+                if (rs.next() && rs.getInt(1) > 0) {
+                    exists = true;
+                }
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(DB.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return exists;
@@ -539,12 +606,10 @@ public class DB {
             Class.forName("org.sqlite.JDBC");
             connection = DriverManager.getConnection(fileName);
 
-            String sql = "DELETE FROM " + dataBaseTableName + " WHERE " + columnName + " = ? AND userName = ?";
+            String sql = "DELETE FROM " + dataBaseTableName + " WHERE " + columnName + " = ?";
 
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, columnValue);
-                statement.setString(2, username);
-
                 int affectedRows = statement.executeUpdate();
 
                 if (affectedRows > 0) {
@@ -574,7 +639,7 @@ public class DB {
         try {
             Class.forName("org.sqlite.JDBC");
             connection = DriverManager.getConnection(fileName);
-            String sql = "SELECT fileName_ FROM " + dataBaseTableName + " WHERE Status = 'Deleted' AND julianday('now') - julianday(dateOfLastModification) > 31";
+            String sql = "SELECT DISTINCT fileName_ FROM " + dataBaseTableName + " WHERE Status = 'Deleted' AND julianday('now') - julianday(dateOfLastModification) > 31";
 
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 try (ResultSet resultSet = statement.executeQuery()) {
@@ -895,6 +960,54 @@ public class DB {
             System.out.println("User table created");
         }
     }
+    private static void createSessionTable(Connection conn) throws SQLException {
+        String sql = """
+                    CREATE TABLE IF NOT EXISTS session (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        username VARCHAR(100) NOT NULL,
+                        login_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        logout_time DATETIME
+                    );
+                """;
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+        }
+    }
+    private static void createFileInfoTable(Connection conn) throws SQLException {
+        String sql = """
+                    CREATE TABLE "fileInfo" (
+                    	"userName"	TEXT,
+                    	"fileName_"	TEXT,
+                    	"fileSize"	INTEGER,
+                    	"ACL"	TEXT,
+                    	"chunk1id"	TEXT,
+                    	"chunk2id"	TEXT,
+                    	"chunk3id"	TEXT,
+                    	"chunk4id"	TEXT,
+                    	"encryptionKey"	TEXT,
+                    	"CRC32"	INTEGER,
+                    	"dateOfCreation"	DATE,
+                    	"dateOfLastModification"	DATE,
+                    	"Status"	TEXT DEFAULT 'Exists',
+                    	FOREIGN KEY("userName") REFERENCES "Users"("name") ON DELETE CASCADE ON UPDATE CASCADE
+                    );
+                """;
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+        }
+    }
+
+    private static void createAppLogs(Connection conn) throws SQLException {
+        String sql = """
+                    CREATE TABLE appLogs (
+                          log TEXT,
+                          date_and_time DATETIME DEFAULT CURRENT_TIMESTAMP
+                      )
+                """;
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+        }
+    }
     /**
      * Checks if a user with the given username already exists in the users table.
      * @param username the username to check
@@ -918,6 +1031,9 @@ public class DB {
             if (conn != null) {
 
                 createUsersTable(conn);
+                createFileInfoTable(conn);
+                createAppLogs(conn);
+                createSessionTable(conn);
 
                 System.out.println("Local SQLite tables created (if not exist).");
             }

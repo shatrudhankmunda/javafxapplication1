@@ -4,160 +4,356 @@
  */
 package com.mycompany.javafxapplication1;
 
-import static com.mycompany.javafxapplication1.LoginController.username_;
-import static com.mycompany.javafxapplication1.ScpTo.Numberofchunks;
-import java.io.File;
-import java.io.IOException;
-import java.util.Optional;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
 import java.io.*;
-import java.security.spec.InvalidKeySpecException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.io.FileReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.spec.InvalidKeySpecException;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.CRC32;
 import java.util.zip.ZipException;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.ObservableList;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.ProgressIndicator;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 
+import static com.mycompany.javafxapplication1.LoginController.username_;
+import static com.mycompany.javafxapplication1.ScpTo.numberOfChunks;
 
 /**
  * FXML Controller class
  *
  * @author ntu-user
  */
-public class FilemanagerController  {
-    
-    @FXML 
-    private TextField fileNameinput;
-    
-    @FXML 
-    private TextField cloudinput;
-    
-    
-    @FXML 
-    private TextField receiverinput;
-    
-    
-    @FXML 
-    private TextField cloudinput2;
+public class FilemanagerController {
 
-    @FXML
-    private  TextArea output;
-
-    @FXML
-    private Button createbtn;
-    
-    @FXML
-    private Button refreshbtnred;
-
-    @FXML
-    private Button readbtn;
-
-    @FXML
-    private  Button updatebtn;
-
-    @FXML
-    private Button selectBtn;
-
-    @FXML
-    private Text fileText;
-
-    @FXML
-    private Button uploadBtn;
-    
-    @FXML
-    private Button filemanagerextended;
-    
-    @FXML
-    private Button recover;
-    
-    @FXML
-    private Button backButton;
-    
-    @FXML
-    private Button backButton2;
-    
-    @FXML
-    private Button selectCloudBtn;
-    
-    @FXML
-    private Button selectCloudBtn2;
-    
-    @FXML
-    private CheckBox myCheckBox;
-   
-    @FXML
-    private TableView dataTableView;
-    
-     @FXML
-    private TableView dataTableView2;
-    
-    @FXML
-    private ProgressIndicator  progressIndicator;
-    
-    @FXML
-    private ProgressIndicator  progressIndicator2;
-    
+    private static final Logger logger = Logger.getLogger(FilemanagerController.class.getName());
     public static String selectedFilePath;
-       
-    private String checkBoxState = "RW";
-    
-    private String access;
-    
     public static long fileSize;
-
     public static String[] chunkUUIDs = new String[4];
-
     public static String[] Containers = new String[4];
+    public static final String pathToTemp = "E:/Container-based-file-storage-system-main/cwk/JavaFXApplication1/temp/";
+    public static final String pathToCreated = "E:/Container-based-file-storage-system-main/cwk/JavaFXApplication1/temp/createdFiles";
 
     static {
-    Containers[0] = "comp20081-files-container1";
-    Containers[1] = "comp20081-files-container2";
-    Containers[2] = "comp20081-files-container3";
-    Containers[3] = "comp20081-files-container4";
+        Containers[0] = "comp20081-files-container1";
+        Containers[1] = "comp20081-files-container2";
+        Containers[2] = "comp20081-files-container3";
+        Containers[3] = "comp20081-files-container4";
     }
-    
-    public static String pathToTemp = "/home/ntu-user/App/COMP20081-CourseWork/cwk/JavaFXApplication1/temp/" ;
-    public static String pathToCreated = "/home/ntu-user/App/COMP20081-CourseWork/cwk/JavaFXApplication1/temp/createdFiles/" ;
 
-   
-    
     @FXML
-    private void switchToFilemanagerExtended() throws ZipException{
-        
+    private Label localFileLabel;
+    @FXML
+    private TextField cloudinput;
+    @FXML
+    private TextField receiverinput;
+    @FXML
+    private TextField cloudinput2;
+    @FXML
+    private TextArea output;
+    @FXML
+    private Button createbtn;
+    @FXML
+    private Button refreshbtnred;
+    @FXML
+    private Button readbtn;
+    @FXML
+    private Button updatebtn;
+    @FXML
+    private Button selectBtn;
+    @FXML
+    private Text fileText;
+    @FXML
+    private Button uploadBtn;
+    @FXML
+    private Button filemanagerextended;
+    @FXML
+    private Button recover;
+    @FXML
+    private Button backButton;
+    @FXML
+    private Button backButton2;
+    @FXML
+    private Button selectCloudBtn;
+    @FXML
+    private TextField newfileInput;
+    @FXML
+    private Button selectCloudBtn2;
+    @FXML
+    private CheckBox myCheckBox;
+    @FXML
+    private TableView dataTableView;
+    @FXML
+    private TableView dataTableView2;
+    @FXML
+    private ProgressIndicator progressIndicator;
+    @FXML
+    private ProgressIndicator progressIndicator2;
+    private String checkBoxState = "RW";
+    private String access;
+    private boolean selectLocalFile = false;
+
+    public static void dialogue(String headerMsg, String contentMsg) {
+        Stage secondaryStage = new Stage();
+        Group root = new Group();
+        Scene scene = new Scene(root, 300, 300, Color.DARKGRAY);
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirmation Dialog");
+        alert.setHeaderText(headerMsg);
+        alert.setContentText(contentMsg);
+        Optional<ButtonType> result = alert.showAndWait();
+    }
+
+    public static void edialogue(String headerMsg, String contentMsg) {
+        Stage secondaryStage = new Stage();
+        Group root = new Group();
+        Scene scene = new Scene(root, 300, 300, Color.DARKGRAY);
+
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Confirmation Dialog");
+        alert.setHeaderText(headerMsg);
+        alert.setContentText(contentMsg);
+
+        Optional<ButtonType> result = alert.showAndWait();
+    }
+
+    public static void splitFileIntoChunks(String filePath, String outputDir) {
+        Path input = Paths.get(filePath);
+        try {
+            long fileSize = Files.size(input);
+            long baseChunkSize = fileSize / numberOfChunks;
+            long remainder = fileSize % numberOfChunks;
+
+            UUID[] chunkUUIDs = new UUID[numberOfChunks];
+            for (int i = 0; i < numberOfChunks; i++) {
+                chunkUUIDs[i] = UUID.randomUUID();
+            }
+
+            try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(input))) {
+                for (int i = 0; i < numberOfChunks; i++) {
+                    long thisChunkSize = baseChunkSize + (i == numberOfChunks - 1 ? remainder : 0);
+                    String chunkName = String.format("chunk_%02d.bin", i + 1);
+                    Path chunkPath = Paths.get(outputDir, chunkName);
+
+                    try (BufferedOutputStream bos = new BufferedOutputStream(Files.newOutputStream(chunkPath))) {
+                        long bytesLeft = thisChunkSize;
+                        byte[] buffer = new byte[8 * 1024];
+                        int bytesRead;
+                        while (bytesLeft > 0 && (bytesRead = bis.read(buffer, 0, (int)Math.min(buffer.length, bytesLeft))) != -1) {
+                            bos.write(buffer, 0, bytesRead);
+                            bytesLeft -= bytesRead;
+                        }
+                    }
+
+                    String uuidStr = chunkUUIDs[i].toString();
+//                    ScpTo.dockerConnect(
+//                            chunkPath.toString(),
+//                            "Vchunk" + uuidStr + ".bin",
+//                            Containers[i],
+//                            "create"
+//                    );
+
+                    try {
+                        Files.deleteIfExists(chunkPath);
+                    } catch (IOException e) {
+                        System.err.println("Could not delete chunk file: " + chunkPath + " — " + e.getMessage());
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public static void joinFiles(String directoryPath, String originalFileName, String outputPath) {
+        if (chunkUUIDs == null || Containers == null || chunkUUIDs.length < numberOfChunks || Containers.length < numberOfChunks) {
+            edialogue("Join error", "Invalid chunk metadata (UUIDs or Containers).");
+            return;
+        }
+
+        File outputFile = Paths.get(outputPath, originalFileName).toFile();
+
+        try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+            for (int i = 0; i < numberOfChunks; i++) {
+                String virtualFileName = "Vchunk" + chunkUUIDs[i] + ".bin";
+                String localChunkName = "chunk" + (i + 1) + ".bin";
+                String localChunkPath = Paths.get(directoryPath, localChunkName).toString();
+
+                // Attempt to download the chunk from Docker
+                ScpTo.dockerConnect(localChunkName, virtualFileName, Containers[i], "get");
+
+                // Ensure chunk file was downloaded
+                File chunkFile = new File(localChunkPath);
+                if (!chunkFile.exists()) {
+                    Logger.getLogger(FilemanagerController.class.getName()).log(Level.SEVERE, "Missing chunk file: " + localChunkPath);
+                    edialogue("Join error", "Missing chunk file: " + localChunkName);
+                    return;
+                }
+
+                // Append chunk content to the output file
+                try (FileInputStream fis = new FileInputStream(chunkFile)) {
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = fis.read(buffer)) != -1) {
+                        fos.write(buffer, 0, bytesRead);
+                    }
+                }
+
+                // Delete temp chunk after use
+                deleteFile(localChunkPath);
+            }
+
+            edialogue("Join complete", "File successfully reassembled: " + outputFile.getName());
+
+        } catch (IOException e) {
+            Logger.getLogger(FilemanagerController.class.getName()).log(Level.SEVERE, "Error joining files", e);
+            edialogue("Join error", "An error occurred while joining files. Please try again.");
+        }
+    }
+
+
+    public static void readFileAndOutputToTextArea(File file, TextArea outputTextArea) {
+        if (file == null || outputTextArea == null) {
+            System.err.println("File or TextArea is null");
+            return;
+        }
+        outputTextArea.clear();
+        StringBuilder content = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+            return;
+        }
+
+        outputTextArea.setText(content.toString());
+    }
+
+    public static void writeToFile(String filePath, String content) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            writer.write(content);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void deleteDirectory(File directory) {
+        if (directory.exists()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteDirectory(file);
+                    } else {
+                        file.delete();
+                    }
+                }
+            }
+            // Finally, delete the directory itself
+            directory.delete();
+        } else {
+            System.err.println("Directory does not exist: " + directory.getAbsolutePath());
+        }
+    }
+
+    private static void createDirectory(String directoryPath) {
+        File directory = new File(directoryPath);
+        if (!directory.exists()) {
+            if (directory.mkdirs()) {
+            } else {
+                System.err.println("Failed to create directory.");
+            }
+        }
+    }
+
+    public static String getFileName(String filePath) {
+        File file = new File(filePath);
+        return file.getName();
+    }
+
+    public static boolean doesFileExist(String fileName) {
+        // Construct the full path to the file
+
+        String filePath = pathToCreated + File.separator + fileName;
+
+        // Create a File object for the specified file path
+        File file = new File(filePath);
+
+        // Check if the file exists
+        return file.exists();
+    }
+
+    public static void deleteFile(String filePath) {
+        File file = new File(filePath);
+        System.out.println("Exists: "+ file.exists());
+        System.out.println("Can write: "+file.canWrite());
+
+        if(file.exists()){
+          boolean deleted =  file.delete();
+          if(deleted){
+              System.out.println(" Deleted  file  successfully." + file.getName());
+          }else{
+              System.out.println("Failed to delete  file: " + file.getName());
+          }
+        }
+    }
+
+    public static long calculateCRC32(String filePath) throws IOException {
+        // Create a CRC32 object
+        CRC32 crc32 = new CRC32();
+
+        // Open the file input stream
+        try (FileInputStream fis = new FileInputStream(filePath)) {
+            byte[] buffer = new byte[8192]; // Buffer size
+            int bytesRead;
+            // Read bytes from the file and update the CRC32 checksum
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                crc32.update(buffer, 0, bytesRead);
+            }
+        }
+
+        // Get the CRC32 checksum value
+        return crc32.getValue();
+    }
+
+    @FXML
+    private void handleRowClicked(MouseEvent event) {
+        Map<String, String> selectedItem = (Map<String, String>) dataTableView.getSelectionModel().getSelectedItem();
+        if (selectedItem != null) {
+            cloudinput.setText(selectedItem.get("fileName_"));
+        }
+    }
+    @FXML
+    private void handleTableData(MouseEvent event) {
+        Map<String, String> selectedItem = (Map<String, String>) dataTableView.getSelectionModel().getSelectedItem();
+        if (selectedItem != null) {
+            cloudinput2.setText(selectedItem.get("fileName_"));
+        }
+    }
+
+    @FXML
+    private void switchToFilemanagerExtended() throws ZipException {
+
         Stage secondaryStage = new Stage();
         Stage primaryStage = (Stage) filemanagerextended.getScene().getWindow();
         try {
@@ -175,15 +371,15 @@ public class FilemanagerController  {
             e.printStackTrace();
         }
     }
-    
+
     @FXML
-    private void Backbuttonahndler(ActionEvent event){
+    private void Backbuttonahndler(ActionEvent event) {
         String getuser_ = username_.getUser();
         String getpass = username_.getPass();
         Stage secondaryStage = new Stage();
         Stage primaryStage = (Stage) backButton.getScene().getWindow();
         try {
-            
+
             String[] credentials = new String[2];
             credentials[0] = getuser_;
             credentials[1] = getpass;
@@ -193,30 +389,29 @@ public class FilemanagerController  {
             Scene scene = new Scene(root, 640, 480);
             secondaryStage.setScene(scene);
             SecondaryController controller = loader.getController();
-            controller.initialise();
-            secondaryStage.setTitle("Login");
+            controller.initialiseSession();
+            secondaryStage.setTitle("Dashboard");
             secondaryStage.show();
             primaryStage.close();
 
         } catch (Exception e) {
-            e.printStackTrace();
+           Logger.getLogger(FilemanagerController.class.getName()).severe("Error: "+ e.getMessage());
         }
     }
-    
-    
+
     @FXML
-    private void Backbuttonahndler2(ActionEvent event){
+    private void Backbuttonahndler2(ActionEvent event) {
         Stage secondaryStage = new Stage();
         Stage primaryStage = (Stage) backButton2.getScene().getWindow();
         try {
-            
-        
+
+
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(getClass().getResource("filemanager.fxml"));
             Parent root = loader.load();
             Scene scene = new Scene(root, 640, 480);
             secondaryStage.setScene(scene);
-            secondaryStage.setTitle("Login");
+            secondaryStage.setTitle("File Manager");
             FilemanagerController controller = loader.getController();
             controller.initialise2();
             secondaryStage.show();
@@ -226,167 +421,168 @@ public class FilemanagerController  {
             e.printStackTrace();
         }
     }
-    
+
     @FXML
-        private void selectBtnHandler(ActionEvent event) throws IOException {
-            Stage primaryStage = (Stage) selectBtn.getScene().getWindow();
-            primaryStage.setTitle("Select a File");
+    private void selectBtnHandler(ActionEvent event) throws IOException {
+        Stage primaryStage = (Stage) selectBtn.getScene().getWindow();
+        primaryStage.setTitle("Select a File");
 
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Open Resource File");
-            File selectedFile = fileChooser.showOpenDialog(primaryStage);
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open Resource File");
+        File selectedFile = fileChooser.showOpenDialog(primaryStage);
 
-            if(selectedFile != null){
-                selectedFilePath = selectedFile.getCanonicalPath();
-                dialogue("", "FILE SELECTED");
-                fileNameinput.setText("");
-                cloudinput.setText("");
-            }
+        if (selectedFile != null) {
+            selectLocalFile = true;
+            selectedFilePath = selectedFile.getCanonicalPath();
+            dialogue("", "FILE SELECTED");
+            localFileLabel.setText(selectedFile.getName());
+            cloudinput.setText("");
+            newfileInput.setText("");
+            output.setText("");
+            //TO DO
         }
-        
-    
+    }
+
     @FXML
     private void selectCloudBtnHandler(ActionEvent event) throws IOException, ClassNotFoundException {
-        DB myObj = new DB("fileInfo");
-        if (myObj.doesItemExist("fileName_", cloudinput2.getText(),  LoginController.username_.getUser(), "userName")){
-             selectedFilePath = cloudinput2.getText();
-             receiverinput.setText("");
-             dialogue("", "FILE SELECTED");
+        if( cloudinput2.getText().isEmpty()) {
+            edialogue("CANNOT SELECT", "ENTER FILE NAME or SELECT A FILE NAME !");
+            return;
         }
-        else{
-            edialogue("CANNOT SELECT", "FILE DOES NOT EXISTS");
+        DB myObj = new DB("fileInfo");
+        if (myObj.doesItemExist("fileName_", cloudinput2.getText(), LoginController.username_.getUser(), "userName")) {
+            selectedFilePath = cloudinput2.getText();
+            receiverinput.setText("");
+            dialogue("", "FILE SELECTED");
         }
     }
-    
-      @FXML
-    private void selectCloudBtnHandlerlocal(ActionEvent event) throws IOException, ClassNotFoundException {
-        DB myObj = new DB("fileInfo");
-        if(myObj.doesItemExist("fileName_", cloudinput.getText(),  LoginController.username_.getUser(), "userName")){
-             selectedFilePath = cloudinput.getText();
-             String[] chunkIds = myObj.getChunkIds(getFileName(selectedFilePath), LoginController.username_.getUser());
-            System.arraycopy(chunkIds, 0, chunkUUIDs, 0, Numberofchunks);
-             joinFiles(pathToTemp,getFileName(selectedFilePath),pathToCreated);
-             dialogue("", "FILE SELECTED");
-        }
-        else{
-            edialogue("CANNOT SELECT", "FILE DOES NOT EXISTS");
-        }
-    }
-    
-     
 
-     @FXML
+    @FXML
+    private void selectCloudBtnHandlerlocal(ActionEvent event) throws IOException, ClassNotFoundException {
+        if(cloudinput.getText().isEmpty()){
+            edialogue("Warning !!", "Please select file or enter file name!!");
+            return;
+        }
+        DB myObj = new DB("fileInfo");
+        dialogue("", "FILE SELECTED");
+        if (myObj.doesItemExist("fileName_", cloudinput.getText(), LoginController.username_.getUser(), "userName")) {
+            selectedFilePath = cloudinput.getText();
+            String[] chunkIds = myObj.getChunkIds(getFileName(selectedFilePath), LoginController.username_.getUser());
+            System.arraycopy(chunkIds, 0, chunkUUIDs, 0, numberOfChunks);
+            joinFiles(pathToTemp, getFileName(selectedFilePath), pathToCreated);
+
+        } else {
+            edialogue("CANNOT SELECT", "FILE DOES NOT EXISTS");
+        }
+    }
+
+    @FXML
     private void handleCheckBoxAction(ActionEvent event) {
         if (myCheckBox.isSelected()) {
             checkBoxState = "R";
         } else {
-            checkBoxState = "RW"; 
+            checkBoxState = "RW";
         }
     }
-    
-     @FXML
+
+    @FXML
     private void uncheckCheckBox() {
         myCheckBox.setSelected(false);
     }
-    
+
     @FXML
     private void ShareFileHandler(ActionEvent event) throws IOException, ClassNotFoundException, InvalidKeySpecException {
-        DB myObj = new DB("fileInfo"); 
-        DB user = new DB("Users");        
-        String receiver = receiverinput.getText();        
-        if(!(user.doesItemExist("username", receiver, receiver, "username"))){
+        DB myObj = new DB("fileInfo");
+        DB user = new DB("Users");
+        String receiver = receiverinput.getText();
+        if (!(user.doesItemExist("username", receiver, receiver, "username"))) {
             edialogue("CANNOT SHARE", "USER DOES NOT EXISTS");
             return;
         }
-        
+
         if (selectedFilePath != null & (myObj.doesItemExist("fileName_", selectedFilePath, LoginController.username_.getUser(), "userName"))) {
             String[] chunkIds = myObj.getChunkIds(getFileName(selectedFilePath), LoginController.username_.getUser());
-            System.arraycopy(chunkIds, 0, chunkUUIDs, 0, Numberofchunks);
-            joinFiles(pathToTemp,getFileName(selectedFilePath),pathToCreated);
-            helper(receiver); 
+            System.arraycopy(chunkIds, 0, chunkUUIDs, 0, numberOfChunks);
+            joinFiles(pathToTemp, getFileName(selectedFilePath), pathToCreated);
+            helper(receiver);
             selectedFilePath = null;
         } else {
             FilemanagerController.edialogue("CANNOT Share", "NO FILE SELECTED");
         }
-     }
-    
+    }
+
     private void helper(String person) throws InvalidKeySpecException, ClassNotFoundException, IOException {
-    DB myObj = new DB("fileInfo");
-    DB Log = new DB("appLogs");
-    String getuser_ = username_.getUser();
-    String originalFileName = getFileName(selectedFilePath);
-    String newFileName = originalFileName;
+        DB myObj = new DB("fileInfo");
+        DB Log = new DB("appLogs");
+        String getuser_ = username_.getUser();
+        String originalFileName = getFileName(selectedFilePath);
+        String newFileName = originalFileName;
 
-    // Check if the file already exists in the receiver's database
-    if (myObj.doesItemExist("fileName_", originalFileName, person, "userName")) {
-        // Get the file extension (if any)
-        String extension = "";
-        int extensionIndex = originalFileName.lastIndexOf('.');
-        if (extensionIndex != -1) {
-            extension = originalFileName.substring(extensionIndex);
-            originalFileName = originalFileName.substring(0, extensionIndex);
+        // Check if the file already exists in the receiver's database
+        if (myObj.doesItemExist("fileName_", originalFileName, person, "userName")) {
+            // Get the file extension (if any)
+            String extension = "";
+            int extensionIndex = originalFileName.lastIndexOf('.');
+            if (extensionIndex != -1) {
+                extension = originalFileName.substring(extensionIndex);
+                originalFileName = originalFileName.substring(0, extensionIndex);
+            }
+
+            int counter = 1;
+            // Keep incrementing the counter until a unique file name is found
+            while (myObj.doesItemExist("fileName_", newFileName, person, "userName")) {
+                newFileName = originalFileName + "(" + counter + ")" + extension;
+                counter++;
+            }
+        }
+        splitFileIntoChunks(pathToCreated + File.separator + getFileName(selectedFilePath), pathToTemp);
+        if (myObj.doesACLExist(LoginController.username_.getUser(), getFileName(selectedFilePath))) {
+            access = "R";
+        } else {
+            access = getCheckBoxState();
+        }
+        myObj.addDataTofileDB(person, newFileName, fileSize, access, chunkUUIDs[0], chunkUUIDs[1], chunkUUIDs[2], chunkUUIDs[3], "password", calculateCRC32(pathToCreated + File.separator + selectedFilePath));
+        if ((myObj.getCrc(getuser_, getFileName(selectedFilePath))) == calculateCRC32(pathToCreated + File.separator + selectedFilePath)) {
+            Log.addLog("User " + username_.getUser() + " Shared File: " + newFileName + " to " + person, "log");
+            initialise2();
+            dialogue("", "File shared to user: " + person + "successfully!");
+        } else {
+            edialogue("CRC ERROR", "CRC32 check failed");
         }
 
-        int counter = 1;
-        // Keep incrementing the counter until a unique file name is found
-        while (myObj.doesItemExist("fileName_", newFileName, person, "userName")) {
-            newFileName = originalFileName + "(" + counter + ")" + extension;
-            counter++;
+
+        if (doesFileExist(getFileName(selectedFilePath))) {
+            deleteFile(pathToCreated + File.separator + selectedFilePath);
+            selectedFilePath = null;
+            receiverinput.setText("");
+            cloudinput2.setText("");
+            uncheckCheckBox();
         }
     }
-    splitFileIntoChunks(pathToCreated + selectedFilePath, pathToTemp);
-     if(myObj.doesACLExist(LoginController.username_.getUser(), getFileName(selectedFilePath))){
-          access = "R";
-     }
-     else{
-         access = getCheckBoxState();
-     }
-        myObj.addDataTofileDB(person, newFileName, fileSize,access,chunkUUIDs[0], chunkUUIDs[1], chunkUUIDs[2], chunkUUIDs[3], "password",calculateCRC32(pathToCreated + selectedFilePath));
-     if((myObj.getCrc(getuser_, getFileName(selectedFilePath))) == calculateCRC32(pathToCreated + selectedFilePath)){
-    Log.addLog("User " + username_.getUser() + " Shared File: " + newFileName + " to " + person, "log");
-    initialise2();
-      dialogue("", "File shared to user: " + person + "successfully!");
-     }
-     else{
-        edialogue("CRC ERROR", "CRC32 check failed");
-     }
-    
 
-    if (doesFileExist(getFileName(selectedFilePath))) {
-        deleteFile(pathToCreated + selectedFilePath);
-        selectedFilePath = null;
-        receiverinput.setText("");
-        cloudinput2.setText("");
-        uncheckCheckBox();
-    }
-}
-
-   
-    
-    
-   @FXML
+    @FXML
     private void downloadButtonHandler(ActionEvent event) throws ClassNotFoundException, IOException {
         DB myObj = new DB("fileInfo");
         String getuser_ = username_.getUser();
-        if(selectedFilePath == null ){
-           edialogue("", "No file selected");
-           return;
+        if (selectedFilePath == null) {
+            edialogue("", "No file selected");
+            return;
         }
         if (selectedFilePath != null & (myObj.doesItemExist("fileName_", selectedFilePath, LoginController.username_.getUser(), "userName"))
                 & !(myObj.checkStatus(username_.getUser(), getFileName(selectedFilePath)))) {
             DB Log = new DB("appLogs");
             String[] chunkIds = myObj.getChunkIds(getFileName(selectedFilePath), LoginController.username_.getUser());
-            System.arraycopy(chunkIds, 0, chunkUUIDs, 0, Numberofchunks);
-            joinFiles(pathToTemp, getFileName(selectedFilePath),"/home/ntu-user/Downloads/");
-            if((myObj.getCrc(getuser_, getFileName(selectedFilePath))) != calculateCRC32("/home/ntu-user/Downloads/" + getFileName(selectedFilePath))){
+            System.arraycopy(chunkIds, 0, chunkUUIDs, 0, numberOfChunks);
+            joinFiles(pathToTemp, getFileName(selectedFilePath), "/home/ntu-user/Downloads/");
+            if ((myObj.getCrc(getuser_, getFileName(selectedFilePath))) != calculateCRC32("/home/ntu-user/Downloads/" + getFileName(selectedFilePath))) {
                 edialogue("CRC ERROR", "CRC32 check failed");
             }
             Log.addLog("User " + LoginController.username_.getUser() + " Downloaded File: " + getFileName(selectedFilePath), "log");
-            if(myObj.doesACLExist(LoginController.username_.getUser(), getFileName(selectedFilePath))){            
-            makeFileReadOnly("/home/ntu-user/Downloads/" + getFileName(selectedFilePath) );
-            dialogue("File downloaded", "Check download directory");
+            if (myObj.doesACLExist(LoginController.username_.getUser(), getFileName(selectedFilePath))) {
+                makeFileReadOnly("/home/ntu-user/Downloads/" + getFileName(selectedFilePath));
+                dialogue("File downloaded", "Check download directory");
             }
-            
+
             selectedFilePath = null;
             dialogue("File downloaded", "Check download directory");
 
@@ -395,218 +591,246 @@ public class FilemanagerController  {
             FilemanagerController.edialogue("CANNOT DOWNLOAD", "NO FILE SELECTED");
         }
     }
-    
-    
-    
-     @FXML
+
+    @FXML
     private void DeleteBtnHandler(ActionEvent event) throws IOException, ClassNotFoundException {
         if (selectedFilePath != null) {
-        DB myObj = new DB("fileInfo");
-        DB Log = new DB("appLogs");
-        myObj.updateField2(username_.getUser() ,getFileName(selectedFilePath),"Deleted");
-        Log.addLog("User " + username_.getUser() + " Deleted File: " + getFileName(selectedFilePath), "log");
-        initialise2();
-        initialise3();
-        cloudinput2.setText("");
-        selectedFilePath = null;
-        }
-        else {
+            Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmAlert.setTitle("Delete Confirmation");
+            confirmAlert.setHeaderText("Are you sure you want to delete this file?");
+            confirmAlert.setContentText("File: " + getFileName(selectedFilePath));
+            Optional<ButtonType> result = confirmAlert.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                DB myObj = new DB("fileInfo");
+                DB Log = new DB("appLogs");
+                if(myObj.doesACLExistRW(LoginController.username_.getUser(), getFileName(selectedFilePath))){
+                    myObj.updateField2(username_.getUser(), getFileName(selectedFilePath), "Deleted");
+                    Log.addLog("User " + username_.getUser() + " Deleted File: " + getFileName(selectedFilePath), "log");
+                    initialise2();
+                    initialise3();
+                    cloudinput2.setText("");
+                    selectedFilePath = null;
+                    new Alert(Alert.AlertType.INFORMATION) {{
+                        setTitle("Delete Status");
+                        setHeaderText("File Deleted");
+                        setContentText("File deleted successfully!");
+                        showAndWait();
+                    }};
+                }else {
+                    edialogue("CANNOT DELETE","You Don't have permission to delete this file !!");
+                }
+
+            }
+        } else {
             edialogue("CANNOT DELETE", "NO FILE SELECTED");
         }
-    
     }
-    
+
     @FXML
     private void recoverBtnHandler(ActionEvent event) throws IOException, ClassNotFoundException {
         if (selectedFilePath != null) {
-        DB myObj = new DB("fileInfo");
-        DB Log = new DB("appLogs");
-        myObj.updateField2(username_.getUser() ,getFileName(selectedFilePath),"Exists");
-        Log.addLog("User " + username_.getUser() + " Deleted File: " + getFileName(selectedFilePath), "log");
-        initialise2();
-        initialise3();
-        cloudinput2.setText("");
-        selectedFilePath = null;
-        }
-        else {
+            DB myObj = new DB("fileInfo");
+            DB Log = new DB("appLogs");
+            myObj.updateField2(username_.getUser(), getFileName(selectedFilePath), "Exists");
+            Log.addLog("User " + username_.getUser() + " Deleted File: " + getFileName(selectedFilePath), "log");
+            initialise2();
+            initialise3();
+            cloudinput2.setText("");
+            selectedFilePath = null;
+        } else {
             edialogue("CANNOT RECOVER", "NO FILE SELECTED");
         }
     }
-    
-    
+
     @FXML
     private void refreashBtnHandler(ActionEvent event) throws IOException, ClassNotFoundException {
         DB fileDatabaseHandler = new DB("fileInfo");
         DB Log = new DB("appLogs");
         List<String> filesToDelete = fileDatabaseHandler.getFilesToDelete();
         for (String fileName : filesToDelete) {
-            Delete(fileName);         
-            Log.addLog("File: " + fileName + " Was deleted from "+ username_.getUser() + " Recently deleted folder", "log");
+            Delete(fileName);
+            Log.addLog("File: " + fileName + " Was deleted from " + username_.getUser() + " Recently deleted folder", "log");
         }
         initialise3();
 
-    
+
     }
 
     private void Delete(String name) throws IOException, ClassNotFoundException {
         DB myObj = new DB("fileInfo");
         String[] chunkIds = myObj.getChunkIds(name, LoginController.username_.getUser());
-        for(int i = 1; i <= Numberofchunks; i++){
-        ScpTo.dockerConnect("","Vchunk" + chunkIds[i-1] + ".bin", Containers[i-1], "delete");
+        for (int i = 1; i <= numberOfChunks; i++) {
+            ScpTo.dockerConnect("", "Vchunk" + chunkIds[i - 1] + ".bin", Containers[i - 1], "delete");
         }
-        myObj.deleteRecord("fileName_",name,username_.getUser());
+        myObj.deleteRecord("fileName_", name, username_.getUser());
     }
-    
-    
+
     @FXML
     private void readFileButtonHandler() throws ClassNotFoundException {
-    DB myobj = new DB("fileInfo");
-    if(selectedFilePath == null ){
-      edialogue("", "No file selected");
-      return;
-    }
-    if((myobj.doesItemExist("fileName_", getFileName(selectedFilePath), LoginController.username_.getUser(), "userName"))){
-    selectedFilePath = pathToCreated + selectedFilePath;
-    }
-    
-    
-    File file = new File(selectedFilePath);
-    if (selectedFilePath != null && !selectedFilePath.isEmpty()) {
-        if (file.exists()) {
-            readFileAndOutputToTextArea(file, output);
-            selectedFilePath = getFileName(selectedFilePath);
-        } else {
-            System.err.println("File does not exist: " + selectedFilePath);
+        DB myobj = new DB("fileInfo");
+        if (selectedFilePath == null) {
+            edialogue("", "No file selected");
+            return;
         }
-    } else {
-        System.err.println("Selected file path is null or empty.");
+        System.out.println(selectLocalFile);
+        if (selectLocalFile) {
+            File file = new File(selectedFilePath);
+            if (selectedFilePath != null && !selectedFilePath.isEmpty()) {
+                if (file.exists()) {
+                    readFileAndOutputToTextArea(file, output);
+                   // selectedFilePath = getFileName(selectedFilePath);
+                } else {
+                    System.err.println("File does not exist: " + selectedFilePath);
+                }
+            } else {
+                System.err.println("Selected file path is null or empty.");
+            }
+        } else {
+            if ((myobj.doesItemExist("fileName_", getFileName(selectedFilePath), LoginController.username_.getUser(), "userName"))) {
+                selectedFilePath = pathToCreated + File.separator + selectedFilePath;
+            }
+            File file = new File(selectedFilePath);
+            if (selectedFilePath != null && !selectedFilePath.isEmpty()) {
+                if (file.exists()) {
+                    readFileAndOutputToTextArea(file, output);
+                    selectedFilePath = getFileName(selectedFilePath);
+                } else {
+                    System.err.println("File does not exist: " + selectedFilePath);
+                }
+            } else {
+                System.err.println("Selected file path is null or empty.");
+            }
+        }
     }
-}
-    
+
     @FXML
     private void UpdateButtonHandler() throws ClassNotFoundException, InvalidKeySpecException, IOException {
-    DB myobj = new DB("fileInfo");
-    DB Log = new DB("appLogs");    
-    if(selectedFilePath == null ){
-        edialogue("", "No file selected");
-        return;
-     }
-    if(myobj.doesACLExist(LoginController.username_.getUser(), getFileName(selectedFilePath))){
-       edialogue("Permission error", "You have read only permissions");
-       return;
-    }
-   
-    if(!(myobj.doesItemExist("fileName_", getFileName(selectedFilePath), LoginController.username_.getUser(), "userName"))){
-    writeToFile(selectedFilePath, output.getText());
-    dialogue("", "Upload to save changes");
-    return;
-    }
-    
-     if (myobj.doesItemExist("fileName_", getFileName(selectedFilePath), LoginController.username_.getUser(), "userName")) {
-            writeToFile(pathToCreated + selectedFilePath, output.getText());
+        DB myobj = new DB("fileInfo");
+        DB Log = new DB("appLogs");
+        if (selectedFilePath == null) {
+            edialogue("", "No file selected");
+            return;
+        }
+        if (myobj.doesACLExist(LoginController.username_.getUser(), getFileName(selectedFilePath))) {
+            edialogue("Permission error", "You have read only permissions");
+            return;
+        }
+
+//        if (!(myobj.doesItemExist("fileName_", getFileName(selectedFilePath), LoginController.username_.getUser(), "userName"))) {
+//            writeToFile(selectedFilePath, output.getText());
+//            dialogue("", "Upload to save changes");
+//            return;
+//        }
+         if(!myobj.doesFileNameExist(getFileName(selectedFilePath))){
+             writeToFile(selectedFilePath, output.getText());
+              dialogue("", "Upload to save changes");
+              return;
+         }
+        if (myobj.doesItemExist("fileName_", getFileName(selectedFilePath), LoginController.username_.getUser(), "userName")) {
+            writeToFile(pathToCreated + File.separator + getFileName(selectedFilePath), output.getText());
             String[] chunkIds = myobj.getChunkIds(getFileName(selectedFilePath), LoginController.username_.getUser());
-            for(int i = 1; i <= Numberofchunks; i++){
-            ScpTo.dockerConnect("","Vchunk" + chunkIds[i-1] + ".bin", Containers[i-1], "delete");
+            for (int i = 1; i <= numberOfChunks; i++) {
+               // ScpTo.dockerConnect("", "Vchunk" + chunkIds[i - 1] + ".bin", Containers[i - 1], "delete");
             }
-            splitFileIntoChunks(pathToCreated + selectedFilePath, pathToTemp);
-            myobj.updateDataTofileDB(LoginController.username_.getUser(), getFileName(selectedFilePath), fileSize, getFilePermissions(selectedFilePath), chunkUUIDs[0], chunkUUIDs[1], chunkUUIDs[2], chunkUUIDs[3], 123,calculateCRC32(selectedFilePath));
+            splitFileIntoChunks(pathToCreated + File.separator + getFileName(selectedFilePath), pathToTemp);
+            myobj.updateDataTofileDB(LoginController.username_.getUser(), getFileName(selectedFilePath), fileSize, getFilePermissions(selectedFilePath), chunkUUIDs[0], chunkUUIDs[1], chunkUUIDs[2], chunkUUIDs[3], 123, calculateCRC32(selectedFilePath));
             initialise2();
             Log.addLog("User " + LoginController.username_.getUser() + " Updated file: " + getFileName(selectedFilePath), "log");
-            selectedFilePath = null;
-            cloudinput.setText("");
-            output.setText("");
-     }
-    
-
-}
-
-    
-   @FXML
-   private void createButtonHandler(ActionEvent event) throws ClassNotFoundException {
-    Handler hand = new Handler();
-
-    String userCommand = fileNameinput.getText();
-    DB myObj = new DB("fileInfo");
-    DB Log = new DB("appLogs");
-    
-    
-    if (myObj.doesItemExist("fileName_", userCommand, LoginController.username_.getUser(), "userName")) {
-        // File with the same name already exists
-        edialogue("CANNOT CREATE", "FILE ALREADY EXISTS ON THE CLOUD");
-    } else {
-        // File does not exist, proceed with creating
-        cloudinput.setText("");
-        output.setText("");
-        hand.fileCreating(userCommand);
-        selectedFilePath = pathToCreated + userCommand;
-            
-        if (!"".equals(userCommand)) {
-            dialogue("CREATING FILE", "Successful!, You can now write and update your file");
-            Log.addLog("User " + LoginController.username_.getUser() + " Created File: " + getFileName(selectedFilePath), "log");
-        } else {
-            edialogue("CANNOT CREATE", "ENTER FILE NAME");
+//            selectedFilePath = null;
+//            cloudinput.setText("");
+//            output.setText("");
+            dialogue("", "File updated successfully on cloud !!");
+            writeToFile(selectedFilePath, output.getText());
+            if (doesFileExist(getFileName(pathToCreated + File.separator + getFileName(selectedFilePath)))) {
+                deleteFile(pathToCreated + File.separator + getFileName(selectedFilePath));
+            }
         }
+
+
     }
-}
-    
-     @FXML
-    private void uploadButtonHandler(ActionEvent event) throws InvalidKeySpecException, net.lingala.zip4j.exception.ZipException, ClassNotFoundException, IOException {
+
+    @FXML
+    private void createButtonHandler(ActionEvent event) throws ClassNotFoundException {
+        Handler hand = new Handler();
+
+        String userCommand = newfileInput.getText();
+        if (userCommand == null || userCommand.trim().isEmpty()) {
+            edialogue("CANNOT CREATE", "ENTER FILE NAME");
+            return;
+        }
         DB myObj = new DB("fileInfo");
         DB Log = new DB("appLogs");
-        if(selectedFilePath == null ){
-        edialogue("", "No file selected");
-        return;
-        }
-        if (myObj.doesItemExist("fileName_", getFileName(selectedFilePath), LoginController.username_.getUser(), "userName")) {
-        // File with the same name already exists
-        edialogue("CANNOT UPLOAD", "TRY UPDATING INSTEAD");
-        return;
-    } 
-        
-        if (selectedFilePath != null & !(myObj.doesItemExist("fileName_", selectedFilePath, LoginController.username_.getUser(), "userName"))) {
-             splitFileIntoChunks(pathToCreated + getFileName(selectedFilePath), pathToTemp);
-             myObj.addDataTofileDB(LoginController.username_.getUser(), getFileName(selectedFilePath), fileSize, getFilePermissions(selectedFilePath), chunkUUIDs[0], chunkUUIDs[1], chunkUUIDs[2], chunkUUIDs[3], "password",calculateCRC32(selectedFilePath));
-             initialise2();
-             Log.addLog("User " + LoginController.username_.getUser() + " Uploaded File: " + getFileName(selectedFilePath), "log");
-             if(doesFileExist(getFileName(selectedFilePath))){
-                deleteFile(selectedFilePath);
-                selectedFilePath = null;
-                fileNameinput.setText("");
-                cloudinput.setText("");
-                output.setText("");
-             }
+
+
+        if (myObj.doesItemExist("fileName_", userCommand, LoginController.username_.getUser(), "userName")) {
+            // File with the same name already exists
+            edialogue("CANNOT CREATE", "FILE ALREADY EXISTS ON THE CLOUD");
         } else {
-            edialogue("CANNOT UPLOAD", "NO FILE SELECTED");
-            
+            // File does not exist, proceed with creating
+            cloudinput.setText("");
+            output.setText("");
+            localFileLabel.setText("No local file seleted");
+            selectLocalFile = false;
+            hand.fileCreating(userCommand);
+            selectedFilePath = pathToCreated + userCommand;
+            if (!"".equals(userCommand)) {
+                dialogue("CREATING FILE", "Successful!, You can now write and update your file");
+                Log.addLog("User " + LoginController.username_.getUser() + " Created File: " + getFileName(selectedFilePath), "log");
+            }
         }
-    
     }
 
-    public static void dialogue(String headerMsg, String contentMsg) {
-        Stage secondaryStage = new Stage();
-        Group root = new Group();
-        Scene scene = new Scene(root, 300, 300, Color.DARKGRAY);
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Confirmation Dialog");
-        alert.setHeaderText(headerMsg);
-        alert.setContentText(contentMsg);
-        Optional<ButtonType> result = alert.showAndWait();
+    @FXML
+    private void uploadButtonHandler(ActionEvent event) {
+        try {
+            DB myObj = new DB("fileInfo");
+            DB Log = new DB("appLogs");
+            if (selectedFilePath == null) {
+                edialogue("", "No file selected");
+                return;
+            }
+        if (myObj.doesItemExist("fileName_", getFileName(selectedFilePath), LoginController.username_.getUser(), "userName")) {
+            // File with the same name already exists
+            edialogue("CANNOT UPLOAD", "TRY UPDATING INSTEAD");
+            return;
+        }
+
+            if (selectedFilePath != null & !(myObj.doesItemExist("fileName_", selectedFilePath, LoginController.username_.getUser(), "userName"))) {
+                splitFileIntoChunks(pathToCreated + File.separator + getFileName(selectedFilePath), pathToTemp);
+                myObj.addDataTofileDB(LoginController.username_.getUser(), getFileName(selectedFilePath), fileSize, getFilePermissions(selectedFilePath), chunkUUIDs[0], chunkUUIDs[1], chunkUUIDs[2], chunkUUIDs[3], "password", calculateCRC32(selectedFilePath));
+                initialise2();
+                Log.addLog("User " + LoginController.username_.getUser() + " Uploaded File: " + getFileName(selectedFilePath), "log");
+                if (doesFileExist(getFileName(pathToCreated + File.separator + getFileName(selectedFilePath)))) {
+                    deleteFile(pathToCreated + File.separator + getFileName(selectedFilePath));
+                    selectedFilePath = null;
+                    //fileNameinput.setText("")
+                    cloudinput.setText("");
+                    output.setText("");
+                    localFileLabel.setText("No local file selected");
+                }
+            } else {
+                edialogue("CANNOT UPLOAD", "NO FILE SELECTED");
+
+            }
+            new Alert(Alert.AlertType.INFORMATION) {{
+                setTitle("Upload Status");
+                setHeaderText("File Upload");
+                setContentText("File uploaded successfully!");
+                showAndWait();
+            }};
+        } catch (IOException e) {
+            Logger.getLogger(FilemanagerController.class.getName()).log(Level.SEVERE, e.getMessage(), e);
+            edialogue("Upload Error", "An error occurred while uploading the file.");
+        } catch (ClassNotFoundException e) {
+            Logger.getLogger(FilemanagerController.class.getName()).log(Level.SEVERE, e.getMessage(), e);
+            edialogue("Upload Error", "An error occurred while processing the file.");
+        } catch (InvalidKeySpecException e) {
+            Logger.getLogger(FilemanagerController.class.getName()).log(Level.SEVERE, e.getMessage(), e);
+            edialogue("Upload Error", "An error occurred with the encryption key.");
+        }
     }
-    public static void edialogue(String headerMsg, String contentMsg) {
-        Stage secondaryStage = new Stage();
-        Group root = new Group();
-        Scene scene = new Scene(root, 300, 300, Color.DARKGRAY);
 
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Confirmation Dialog");
-        alert.setHeaderText(headerMsg);
-        alert.setContentText(contentMsg);
-
-        Optional<ButtonType> result = alert.showAndWait();
-    }
-
-    
- private void makeFileReadOnly(String filePath) {
+    private void makeFileReadOnly(String filePath) {
         File file = new File(filePath);
         if (file.exists()) {
             file.setReadOnly();
@@ -614,27 +838,24 @@ public class FilemanagerController  {
             System.out.println("File does not exist: " + filePath);
         }
     }
- 
- 
- private String getFilePermissions(String filePath) {
+
+    private String getFilePermissions(String filePath) {
         File file = new File(filePath);
         if (file.exists()) {
             if (file.canWrite()) {
-                return "RW"; 
+                return "RW";
             } else {
-                return "R"; 
+                return "R";
             }
         } else {
-            return "RW"; 
+            return "RW";
         }
     }
-    
- 
-    
-     public void initialise2() {
+
+    public void initialise2() {
         DB myObj = new DB("fileInfo");
         try {
-            ObservableList<Map<String, String>> data = myObj.getDataFromTable2(LoginController.username_.getUser());
+            ObservableList<Map<String, String>> data =myObj.getExistingFileNames(); //myObj.getDataFromTable2(LoginController.username_.getUser());
 
             // Create a TableColumn with the appropriate property name
             TableColumn<Map<String, String>, String> fileNameColumn = new TableColumn<>("Files");
@@ -645,16 +866,16 @@ public class FilemanagerController  {
             dataTableView.getColumns().clear(); // Clear existing columns
             dataTableView.setItems(data);
             dataTableView.getColumns().addAll(fileNameColumn);
-            
-            
+
+
             addContextMenu();
 
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(FilemanagerController.class.getName()).log(Level.SEVERE, null, ex);
         }
-}
-     
- public void initialise3() {
+    }
+
+    public void initialise3() {
         DB myObj = new DB("fileInfo");
         try {
             ObservableList<Map<String, String>> data = myObj.getDataFromTable3(LoginController.username_.getUser());
@@ -668,17 +889,16 @@ public class FilemanagerController  {
             dataTableView2.getColumns().clear(); // Clear existing columns
             dataTableView2.setItems(data);
             dataTableView2.getColumns().addAll(fileNameColumn);
-            
-            
+
+
             addContextMenu2();
 
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(FilemanagerController.class.getName()).log(Level.SEVERE, null, ex);
         }
-}
+    }
 
-     
-     public void addContextMenu() {
+    public void addContextMenu() {
         ContextMenu contextMenu = new ContextMenu();
 
         // Create a menu item to copy the file name
@@ -702,8 +922,8 @@ public class FilemanagerController  {
         // Set the context menu for each row in the TableView
         dataTableView.setContextMenu(contextMenu);
     }
-     
-     public void addContextMenu2() {
+
+    public void addContextMenu2() {
         ContextMenu contextMenu = new ContextMenu();
 
         // Create a menu item to copy the file name
@@ -727,174 +947,9 @@ public class FilemanagerController  {
         // Set the context menu for each row in the TableView
         dataTableView2.setContextMenu(contextMenu);
     }
-    
-      public static void splitFileIntoChunks(String filePath, String Outputpath) {
-        try (FileInputStream fis = new FileInputStream(filePath)) {
-            File file = new File(filePath);
-            fileSize = file.length();
-            long chunkSize = fileSize / Numberofchunks;
-
-            // Generate UUIDs as strings directly and store them in the array
-            for (int i = 0; i < Numberofchunks; i++) {
-                chunkUUIDs[i] = UUID.randomUUID().toString();
-            }
-
-            for (int i = 1; i <= Numberofchunks; i++) {
-                try (FileOutputStream fos = new FileOutputStream(Outputpath + "/chunk" + i + ".bin")) {
-                    byte[] buffer = new byte[(int) chunkSize];
-                    int bytesRead = fis.read(buffer);
-
-                    // If the last chunk is smaller, adjust the buffer size
-                    if (i == Numberofchunks && bytesRead < chunkSize) {
-                        buffer = Arrays.copyOf(buffer, bytesRead);
-                    }
-
-                    fos.write(buffer);
-
-                    // Use chunkUUIDs in your file transfer logic
-                    ScpTo.dockerConnect("chunk" + i + ".bin","Vchunk" + chunkUUIDs[i - 1] + ".bin", Containers[i-1], "create");
-
-                    deleteFile(Outputpath + "/chunk" + i + ".bin"); // Delete using UUID string
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    
-    public static void joinFiles(String directoryPath,String originalFileName, String outputPath) {
-    try (FileOutputStream fos = new FileOutputStream(outputPath + originalFileName)) {
-        for (int i = 1; i <= Numberofchunks; i++) {
-            String virtualFileName = "Vchunk" + chunkUUIDs[i - 1] + ".bin";
-            ScpTo.dockerConnect("chunk" + i + ".bin", virtualFileName, Containers[i-1], "get");
-            
-            try (FileInputStream fis = new FileInputStream(directoryPath + "/chunk" + i + ".bin")) {
-                byte[] buffer = new byte[1024];
-                int bytesRead;
-
-                while ((bytesRead = fis.read(buffer)) != -1) {
-                    fos.write(buffer, 0, bytesRead);
-                }
-            }
-            deleteFile(directoryPath + "/chunk" + i + ".bin");
-        }
-    } catch (IOException e) {
-        edialogue("Join error","Try again");
-        e.printStackTrace();
-    }
-}
-
-
-
-       
-    
-    public static void readFileAndOutputToTextArea(File file, TextArea outputTextArea) {
-        if (file == null || outputTextArea == null) {
-            System.err.println("File or TextArea is null");
-            return;
-        }
-        
-        StringBuilder content = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                content.append(line).append("\n");
-            }
-        } catch (IOException e) {
-            System.err.println("Error reading file: " + e.getMessage());
-            return;
-        }
-        
-        outputTextArea.setText(content.toString());
-    }
-
-    public static void writeToFile(String filePath, String content) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-            writer.write(content);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    
- private static void deleteDirectory(File directory) {
-        if (directory.exists()) {
-            File[] files = directory.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        deleteDirectory(file);
-                    } else {
-                        file.delete();
-                    }
-                }
-            }
-            // Finally, delete the directory itself
-            directory.delete();
-        } else {
-            System.err.println("Directory does not exist: " + directory.getAbsolutePath());
-        }
-    }
-    
-    private static void createDirectory(String directoryPath) {
-        File directory = new File(directoryPath);
-        if (!directory.exists()) {
-            if (directory.mkdirs()) {
-            } else {
-                System.err.println("Failed to create directory.");
-            }
-        }
-    }
-
-    public static String getFileName(String filePath) {
-        File file = new File(filePath);
-        return file.getName();
-    }
-    
-    public static boolean doesFileExist(String fileName) {
-        // Construct the full path to the file
-        
-        String filePath = pathToCreated + File.separator + fileName;
-
-        // Create a File object for the specified file path
-        File file = new File(filePath);
-
-        // Check if the file exists
-        return file.exists();
-    }
-    
-   public static void deleteFile(String filePath) {
-        File File = new File(filePath);
-        if (File.delete()) {
-        } else {
-            System.out.println("Failed to delete chunk file: " + File.getName());
-        }
-    }
-   
-   public static long calculateCRC32(String filePath) throws IOException {
-        // Create a CRC32 object
-        CRC32 crc32 = new CRC32();
-        
-        // Open the file input stream
-        try (FileInputStream fis = new FileInputStream(filePath)) {
-            byte[] buffer = new byte[8192]; // Buffer size
-            int bytesRead;
-            // Read bytes from the file and update the CRC32 checksum
-            while ((bytesRead = fis.read(buffer)) != -1) {
-                crc32.update(buffer, 0, bytesRead);
-            }
-        }
-        
-        // Get the CRC32 checksum value
-        return crc32.getValue();
-    }
 
     public String getCheckBoxState() {
         return checkBoxState;
     }
-    
-    
-    
-     
 
- 
-    }
+}

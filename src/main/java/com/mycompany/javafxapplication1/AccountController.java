@@ -8,8 +8,7 @@ package com.mycompany.javafxapplication1;
 import static com.mycompany.javafxapplication1.FilemanagerController.Containers;
 import static com.mycompany.javafxapplication1.FilemanagerController.dialogue;
 import static com.mycompany.javafxapplication1.FilemanagerController.edialogue;
-import static com.mycompany.javafxapplication1.PrimaryController.username_;
-import static com.mycompany.javafxapplication1.ScpTo.Numberofchunks;
+import static com.mycompany.javafxapplication1.ScpTo.numberOfChunks;
 import java.io.IOException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.List;
@@ -90,8 +89,8 @@ public class AccountController {
             Scene scene = new Scene(root, 640, 480);
             secondaryStage.setScene(scene);
             SecondaryController controller = loader.getController();
-            controller.initialise();
-            secondaryStage.setTitle("Secondary view");
+            controller.initialiseSession();
+            secondaryStage.setTitle("Dashboard");
             secondaryStage.show();
             primaryStage.close();
 
@@ -271,7 +270,7 @@ public class AccountController {
     private void Delete(String name) throws IOException, ClassNotFoundException {
         DB myObj = new DB("fileInfo");
         String[] chunkIds = myObj.getChunkIds(name, SessionManager.getInstance().getCurrentUser());
-        for(int i = 1; i <= Numberofchunks; i++){
+        for(int i = 1; i <= numberOfChunks; i++){
         ScpTo.dockerConnect("","Vchunk" + chunkIds[i-1] + ".bin", Containers[i-1], "delete");
         }
         myObj.deleteRecord("fileName_",name,SessionManager.getInstance().getCurrentUser());
