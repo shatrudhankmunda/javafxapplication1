@@ -219,6 +219,7 @@ public class DB {
                 statement.setString(1, logMessage);
 
                 statement.executeUpdate();
+                Logger.getLogger(DB.class.getName()).log(Level.INFO, "Log added: {0}", logMessage);
             }
 
         } catch (SQLException | ClassNotFoundException ex) {
@@ -709,7 +710,7 @@ public class DB {
             connection = DriverManager.getConnection(fileName);
 
             // Use a PreparedStatement for better handling of parameters and to prevent SQL injection
-            String sql = "SELECT COUNT(*) FROM " + dataBaseTableName + " WHERE name = ?";
+            String sql = "SELECT COUNT(*) FROM " + dataBaseTableName + " WHERE username = ?";
 
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, name);
@@ -813,12 +814,11 @@ public class DB {
             Class.forName("org.sqlite.JDBC");
             connection = DriverManager.getConnection(fileName);
 
-            String sql = "UPDATE " + dataBaseTableName + " SET Status = ? WHERE userName = ? AND fileName_ = ?";
+            String sql = "UPDATE " + dataBaseTableName + " SET Status = ? WHERE  fileName_ = ?";
 
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, status);
-                statement.setString(2, username);
-                statement.setString(3, value);
+                statement.setString(2, value);
 
                 int affectedRows = statement.executeUpdate();
 
@@ -975,7 +975,7 @@ public class DB {
     }
     private static void createFileInfoTable(Connection conn) throws SQLException {
         String sql = """
-                    CREATE TABLE "fileInfo" (
+                    CREATE TABLE IF NOT EXISTS "fileInfo" (
                     	"userName"	TEXT,
                     	"fileName_"	TEXT,
                     	"fileSize"	INTEGER,
@@ -999,7 +999,7 @@ public class DB {
 
     private static void createAppLogs(Connection conn) throws SQLException {
         String sql = """
-                    CREATE TABLE appLogs (
+                    CREATE TABLE IF NOT EXISTS appLogs (
                           log TEXT,
                           date_and_time DATETIME DEFAULT CURRENT_TIMESTAMP
                       )

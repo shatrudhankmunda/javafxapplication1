@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import static com.mycompany.javafxapplication1.FilemanagerController.Containers;
+import static com.mycompany.javafxapplication1.FilemanagerController.edialogue;
 import static com.mycompany.javafxapplication1.ScpTo.numberOfChunks;
 
 public class LoginController {
@@ -92,8 +93,14 @@ public class LoginController {
     private void delete(String name) throws IOException, ClassNotFoundException {
         DB myObj = new DB("fileInfo");
         String[] chunkIds = myObj.getChunkIds(name, SessionManager.getInstance().getCurrentUser());
-        for(int i = 1; i <= numberOfChunks; i++){
-            ScpTo.dockerConnect("","Vchunk" + chunkIds[i-1] + ".bin", Containers[i-1], "delete");
+        for(int i = 0; i < numberOfChunks; i++){
+            try {
+                ScpTo.dockerConnect("","Vchunk" + chunkIds[i] + ".bin", "localhost", 2221+i,  "delete");
+            } catch (Exception e) {
+                logger.severe("Failed to delete chunk Vchunk" + chunkIds[i] + ".bin: " + e.getMessage());
+                edialogue("Error Deleting File", "Failed to delete chunk Vchunk" + chunkIds[i] + ".bin. Please check the connection or file existence.");
+                return;
+            }
         }
         myObj.deleteRecord("fileName_",name,SessionManager.getInstance().getCurrentUser());
     }

@@ -53,7 +53,7 @@ public class MySQLDB {
 
     private static void createAppLogs(Connection conn) throws SQLException {
         String sql = """
-                    CREATE TABLE appLogs (
+                    CREATE TABLE IF NOT EXISTS appLogs (
                           log TEXT,
                           date_and_time DATETIME DEFAULT CURRENT_TIMESTAMP
                       )
@@ -79,7 +79,7 @@ public class MySQLDB {
 
     private static void createFileInfoTable(Connection conn) throws SQLException {
         String sql = """
-                    CREATE TABLE "fileInfo" (
+                    CREATE TABLE IF NOT EXISTS "fileInfo" (
                     	"userName"	TEXT,
                     	"fileName_"	TEXT,
                     	"fileSize"	INTEGER,

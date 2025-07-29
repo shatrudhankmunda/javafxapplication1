@@ -12,6 +12,7 @@ import static com.mycompany.javafxapplication1.ScpTo.numberOfChunks;
 import java.io.IOException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javafx.event.ActionEvent;
@@ -95,7 +96,8 @@ public class AccountController {
             primaryStage.close();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.getLogger(AccountController.class.getName()).log(Level.SEVERE, "Error during navigation to secondary.fxml", e);
+            edialogue("System Error", "An error occurred while trying to navigate. Please try again later.");
         }
     }
 
@@ -143,18 +145,22 @@ public class AccountController {
                     delacctpass.clear();
                     fileText.setText(newName);
                     SessionManager.getInstance().login(newName,getpass);
+                    Logger.getLogger(AccountController.class.getName()).log(Level.INFO, "Username changed successfully for user: {0}", newName);
                     dialogue("Username Update", "Successful");
                     
                 } else {
                     // New name is the same as the current name
+                    Logger.getLogger(AccountController.class.getName()).log(Level.WARNING, "Attempted to change username to the same name: {0}", newName);
                     edialogue("Invalid Name", "New name cannot be the same as the current name");
                 }
             } else {
                 // Password mismatch
+                Logger.getLogger(AccountController.class.getName()).log(Level.WARNING, "Password mismatch for user: {0}", getuser_);
                 edialogue("Invalid Password", "Please try again with the correct password");
             }
         } catch (Exception e) {
             // SQLiteException occurred
+            Logger.getLogger(AccountController.class.getName()).log(Level.SEVERE, "Error changing username for user: " + getuser_, e.getMessage());
             edialogue("Error", "Name already in use");
         } 
     }
@@ -171,6 +177,7 @@ public class AccountController {
          String getuser_ = SessionManager.getInstance().getCurrentUser();
          String getpass = SessionManager.getInstance().getPassword();
          if (old == null || old.trim().isEmpty()) {
+             Logger.getLogger(AccountController.class.getName()).log(Level.WARNING, "Old password is empty for user: {0}", getuser_);
              edialogue("Invalid Input", "Old password cannot be empty");
              return;
          }
@@ -197,8 +204,10 @@ public class AccountController {
             oldpass.clear();
             delacctname.clear();
             delacctpass.clear();
+            Logger.getLogger(AccountController.class.getName()).log(Level.INFO, "Password changed successfully for user: {0}", getuser_);
             dialogue("Username Update", "Successful");
         } else {
+            Logger.getLogger(AccountController.class.getName()).log(Level.WARNING, "Password change failed for user: {0}", getuser_);
             edialogue("COULD NOT CHANGE", "Please try again");
         }
     }
@@ -238,12 +247,14 @@ public class AccountController {
                     Delete(fileName);
                 }
                 myobj.deleteUser(username);
+                logger.info("User " + SessionManager.getInstance().getCurrentUser() + " deleted their account.");
                 dialogue("ACCOUNT DELETED", "Successful!");
                 logger.info("LOGOUT: " + SessionManager.getInstance().getCurrentUser());
                 SessionStore.saveLogout(SessionManager.getInstance().getCurrentUser());
                 SessionManager.getInstance().logout();
                 switchToPrimary();
             } else {
+                logger.warning("Account deletion failed for user: " + getuser_ + ". Incorrect username or password.");
                 edialogue("ACCOUNT NOT DELETED", "Please try again with the correct Username and password");
             }
         }
@@ -264,14 +275,23 @@ public class AccountController {
             stage.setTitle("Login user");
             stage.show();
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.getLogger(AccountController.class.getName()).log(Level.SEVERE, "Error during navigation to Login.fxml", e);
+            edialogue("System Error", "An error occurred while trying to navigate. Please try again later.");
         }
     }
     private void Delete(String name) throws IOException, ClassNotFoundException {
         DB myObj = new DB("fileInfo");
         String[] chunkIds = myObj.getChunkIds(name, SessionManager.getInstance().getCurrentUser());
-        for(int i = 1; i <= numberOfChunks; i++){
-        ScpTo.dockerConnect("","Vchunk" + chunkIds[i-1] + ".bin", Containers[i-1], "delete");
+        logger.info("Deleting file: " + name + " with chunk IDs: " + String.join(", ", chunkIds));
+        for(int i = 0; i < numberOfChunks; i++){
+//        ScpTo.dockerConnect("","Vchunk" + chunkIds[i-1] + ".bin", Containers[i-1], "delete");
+            try {
+                ScpTo.dockerConnect("", "Vchunk" + chunkIds[i] + ".bin", "localhost", 2221+i, "delete");
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Error deleting chunk: " + chunkIds[i], e.getMessage());
+                edialogue("Error", "Failed to delete chunk: " + chunkIds[i]);
+                return;
+            }
         }
         myObj.deleteRecord("fileName_",name,SessionManager.getInstance().getCurrentUser());
     }

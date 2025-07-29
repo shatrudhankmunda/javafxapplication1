@@ -45,16 +45,18 @@ public class FilemanagerController {
     private static final Logger logger = Logger.getLogger(FilemanagerController.class.getName());
     public static String selectedFilePath;
     public static long fileSize;
+//    public static UUID[] chunkUUIDs = new UUID[numberOfChunks];
     public static String[] chunkUUIDs = new String[4];
     public static String[] Containers = new String[4];
+    public static final String downloadsPath = "C:\\Users\\hp\\Downloads\\";
     public static final String pathToTemp = "E:/Container-based-file-storage-system-main/cwk/JavaFXApplication1/temp/";
-    public static final String pathToCreated = "E:/Container-based-file-storage-system-main/cwk/JavaFXApplication1/temp/createdFiles";
+    public static final String pathToCreated = "E:/Container-based-file-storage-system-main/cwk/JavaFXApplication1/temp/createdFiles/";
 
     static {
-        Containers[0] = "comp20081-files-container1";
-        Containers[1] = "comp20081-files-container2";
-        Containers[2] = "comp20081-files-container3";
-        Containers[3] = "comp20081-files-container4";
+        Containers[0] = "chunk_container_1";
+        Containers[1] = "chunk_container_2";
+        Containers[2] = "chunk_container_3";
+        Containers[3] = "chunk_container_4";
     }
 
     @FXML
@@ -108,6 +110,7 @@ public class FilemanagerController {
     private String checkBoxState = "RW";
     private String access;
     private boolean selectLocalFile = false;
+    private boolean selectedCloudFile = false;
 
     public static void dialogue(String headerMsg, String contentMsg) {
         Stage secondaryStage = new Stage();
@@ -140,9 +143,9 @@ public class FilemanagerController {
             long baseChunkSize = fileSize / numberOfChunks;
             long remainder = fileSize % numberOfChunks;
 
-            UUID[] chunkUUIDs = new UUID[numberOfChunks];
+
             for (int i = 0; i < numberOfChunks; i++) {
-                chunkUUIDs[i] = UUID.randomUUID();
+                chunkUUIDs[i] = UUID.randomUUID().toString();
             }
 
             try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(input))) {
@@ -161,13 +164,20 @@ public class FilemanagerController {
                         }
                     }
 
-                    String uuidStr = chunkUUIDs[i].toString();
-//                    ScpTo.dockerConnect(
-//                            chunkPath.toString(),
-//                            "Vchunk" + uuidStr + ".bin",
-//                            Containers[i],
-//                            "create"
-//                    );
+                    String uuidStr = chunkUUIDs[i];
+                    try {
+                        ScpTo.dockerConnect(
+                                chunkPath.toString(),
+                                "Vchunk" + uuidStr + ".bin",
+                                "localhost",
+                                2221+i,// Assuming localhost for simplicity; replace with actual container name if needed
+                                "create"
+                        );
+                    } catch (Exception e) {
+                        logger.log(Level.SEVERE, "Failed to upload chunk: " + chunkName, e.getMessage());
+                        edialogue("Upload Error", "Failed to upload chunk: " + chunkName + " — " + e.getMessage());
+                        return;
+                    }
 
                     try {
                         Files.deleteIfExists(chunkPath);
@@ -197,7 +207,13 @@ public class FilemanagerController {
                 String localChunkPath = Paths.get(directoryPath, localChunkName).toString();
 
                 // Attempt to download the chunk from Docker
-                ScpTo.dockerConnect(localChunkName, virtualFileName, Containers[i], "get");
+                try {
+                    ScpTo.dockerConnect(localChunkName, virtualFileName, "localhost", 2221+i,  "get");
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Failed to download chunk: " + localChunkName, e.getMessage());
+                    edialogue("Join error", "Failed to download chunk: " + localChunkName + " — " + e.getMessage());
+                    return;
+                }
 
                 // Ensure chunk file was downloaded
                 File chunkFile = new File(localChunkPath);
@@ -219,7 +235,7 @@ public class FilemanagerController {
                 // Delete temp chunk after use
                 deleteFile(localChunkPath);
             }
-
+            Logger.getLogger(FilemanagerController.class.getName()).log(Level.INFO, "Files joined successfully into: {0}", outputFile.getAbsolutePath());
             edialogue("Join complete", "File successfully reassembled: " + outputFile.getName());
 
         } catch (IOException e) {
@@ -249,11 +265,9 @@ public class FilemanagerController {
         outputTextArea.setText(content.toString());
     }
 
-    public static void writeToFile(String filePath, String content) {
+    public static void writeToFile(String filePath, String content) throws Exception {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             writer.write(content);
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -305,15 +319,12 @@ public class FilemanagerController {
 
     public static void deleteFile(String filePath) {
         File file = new File(filePath);
-        System.out.println("Exists: "+ file.exists());
-        System.out.println("Can write: "+file.canWrite());
-
         if(file.exists()){
           boolean deleted =  file.delete();
           if(deleted){
-              System.out.println(" Deleted  file  successfully." + file.getName());
+              Logger.getLogger(FilemanagerController.class.getName()).log(Level.INFO, "File deleted successfully: {0}", file.getName());
           }else{
-              System.out.println("Failed to delete  file: " + file.getName());
+              Logger.getLogger(FilemanagerController.class.getName()).log(Level.SEVERE, "Failed to delete file: {0}", file.getName());
           }
         }
     }
@@ -352,7 +363,7 @@ public class FilemanagerController {
     }
 
     @FXML
-    private void switchToFilemanagerExtended() throws ZipException {
+    private void switchToFilemanagerExtended()  {
 
         Stage secondaryStage = new Stage();
         Stage primaryStage = (Stage) filemanagerextended.getScene().getWindow();
@@ -368,7 +379,8 @@ public class FilemanagerController {
             secondaryStage.show();
             primaryStage.close();
         } catch (Exception e) {
-            e.printStackTrace();
+           Logger.getLogger(FilemanagerController.class.getName()).severe("Error: "+ e.getMessage());
+            edialogue("Error", "Failed to switch to File Manager Extended view. Please try again.");
         }
     }
 
@@ -434,7 +446,9 @@ public class FilemanagerController {
         if (selectedFile != null) {
             selectLocalFile = true;
             selectedFilePath = selectedFile.getCanonicalPath();
+            logger.log(Level.INFO, "Selected file path: {0}", selectedFilePath);
             dialogue("", "FILE SELECTED");
+            selectedCloudFile = false;
             localFileLabel.setText(selectedFile.getName());
             cloudinput.setText("");
             newfileInput.setText("");
@@ -448,13 +462,19 @@ public class FilemanagerController {
         if( cloudinput2.getText().isEmpty()) {
             edialogue("CANNOT SELECT", "ENTER FILE NAME or SELECT A FILE NAME !");
             return;
-        }
-        DB myObj = new DB("fileInfo");
-        if (myObj.doesItemExist("fileName_", cloudinput2.getText(), LoginController.username_.getUser(), "userName")) {
+        }else{
             selectedFilePath = cloudinput2.getText();
             receiverinput.setText("");
+            logger.log(Level.INFO, "Selected cloud file: {0}", selectedFilePath);
             dialogue("", "FILE SELECTED");
+            return;
         }
+//        DB myObj = new DB("fileInfo");
+//        if (myObj.doesItemExist("fileName_", cloudinput2.getText(), LoginController.username_.getUser(), "userName")) {
+//            selectedFilePath = cloudinput2.getText();
+//            receiverinput.setText("");
+//            dialogue("", "FILE SELECTED");
+//        }
     }
 
     @FXML
@@ -465,12 +485,13 @@ public class FilemanagerController {
         }
         DB myObj = new DB("fileInfo");
         dialogue("", "FILE SELECTED");
+        logger.log(Level.INFO, "Selected cloud file: {0}", cloudinput.getText());
+        selectedCloudFile = true;
         if (myObj.doesItemExist("fileName_", cloudinput.getText(), LoginController.username_.getUser(), "userName")) {
             selectedFilePath = cloudinput.getText();
             String[] chunkIds = myObj.getChunkIds(getFileName(selectedFilePath), LoginController.username_.getUser());
             System.arraycopy(chunkIds, 0, chunkUUIDs, 0, numberOfChunks);
             joinFiles(pathToTemp, getFileName(selectedFilePath), pathToCreated);
-
         } else {
             edialogue("CANNOT SELECT", "FILE DOES NOT EXISTS");
         }
@@ -496,12 +517,14 @@ public class FilemanagerController {
         DB user = new DB("Users");
         String receiver = receiverinput.getText();
         if (!(user.doesItemExist("username", receiver, receiver, "username"))) {
+            logger.log(Level.WARNING, "User does not exist: {0}", receiver);
             edialogue("CANNOT SHARE", "USER DOES NOT EXISTS");
             return;
         }
 
         if (selectedFilePath != null & (myObj.doesItemExist("fileName_", selectedFilePath, LoginController.username_.getUser(), "userName"))) {
             String[] chunkIds = myObj.getChunkIds(getFileName(selectedFilePath), LoginController.username_.getUser());
+            Logger.getLogger(FilemanagerController.class.getName()).log(Level.INFO, "Chunk IDs: {0}", Arrays.toString(chunkIds));
             System.arraycopy(chunkIds, 0, chunkUUIDs, 0, numberOfChunks);
             joinFiles(pathToTemp, getFileName(selectedFilePath), pathToCreated);
             helper(receiver);
@@ -542,13 +565,15 @@ public class FilemanagerController {
             access = getCheckBoxState();
         }
         myObj.addDataTofileDB(person, newFileName, fileSize, access, chunkUUIDs[0], chunkUUIDs[1], chunkUUIDs[2], chunkUUIDs[3], "password", calculateCRC32(pathToCreated + File.separator + selectedFilePath));
-        if ((myObj.getCrc(getuser_, getFileName(selectedFilePath))) == calculateCRC32(pathToCreated + File.separator + selectedFilePath)) {
-            Log.addLog("User " + username_.getUser() + " Shared File: " + newFileName + " to " + person, "log");
-            initialise2();
-            dialogue("", "File shared to user: " + person + "successfully!");
-        } else {
-            edialogue("CRC ERROR", "CRC32 check failed");
-        }
+        Log.addLog("User " + username_.getUser() + " Shared File: " + newFileName + " to " + person, "log");
+        initialise2();
+        logger.log(Level.INFO, "File shared successfully: {0} to {1}", new Object[]{newFileName, person});
+        dialogue("", "File shared to user: " + person + "successfully!");
+        //        if ((myObj.getCrc(getuser_, getFileName(selectedFilePath))) == calculateCRC32(pathToCreated + File.separator + selectedFilePath)) {
+//
+//        } else {
+////            edialogue("CRC ERROR", "CRC32 check failed");
+//        }
 
 
         if (doesFileExist(getFileName(selectedFilePath))) {
@@ -572,14 +597,16 @@ public class FilemanagerController {
                 & !(myObj.checkStatus(username_.getUser(), getFileName(selectedFilePath)))) {
             DB Log = new DB("appLogs");
             String[] chunkIds = myObj.getChunkIds(getFileName(selectedFilePath), LoginController.username_.getUser());
+            logger.log(Level.INFO, "Chunk IDs: {0}", Arrays.toString(chunkIds));
             System.arraycopy(chunkIds, 0, chunkUUIDs, 0, numberOfChunks);
-            joinFiles(pathToTemp, getFileName(selectedFilePath), "/home/ntu-user/Downloads/");
-            if ((myObj.getCrc(getuser_, getFileName(selectedFilePath))) != calculateCRC32("/home/ntu-user/Downloads/" + getFileName(selectedFilePath))) {
-                edialogue("CRC ERROR", "CRC32 check failed");
+            joinFiles(pathToTemp, getFileName(selectedFilePath), downloadsPath);
+            if ((myObj.getCrc(getuser_, getFileName(selectedFilePath))) != calculateCRC32(downloadsPath + getFileName(selectedFilePath))) {
+//                edialogue("CRC ERROR", "CRC32 check failed");
             }
             Log.addLog("User " + LoginController.username_.getUser() + " Downloaded File: " + getFileName(selectedFilePath), "log");
+            logger.log(Level.INFO, "File downloaded successfully: {0}", getFileName(selectedFilePath));
             if (myObj.doesACLExist(LoginController.username_.getUser(), getFileName(selectedFilePath))) {
-                makeFileReadOnly("/home/ntu-user/Downloads/" + getFileName(selectedFilePath));
+                makeFileReadOnly("downloadsPath" + getFileName(selectedFilePath));
                 dialogue("File downloaded", "Check download directory");
             }
 
@@ -606,6 +633,7 @@ public class FilemanagerController {
                 if(myObj.doesACLExistRW(LoginController.username_.getUser(), getFileName(selectedFilePath))){
                     myObj.updateField2(username_.getUser(), getFileName(selectedFilePath), "Deleted");
                     Log.addLog("User " + username_.getUser() + " Deleted File: " + getFileName(selectedFilePath), "log");
+                    logger.log(Level.INFO, "File deleted successfully: {0}", getFileName(selectedFilePath));
                     initialise2();
                     initialise3();
                     cloudinput2.setText("");
@@ -659,8 +687,14 @@ public class FilemanagerController {
     private void Delete(String name) throws IOException, ClassNotFoundException {
         DB myObj = new DB("fileInfo");
         String[] chunkIds = myObj.getChunkIds(name, LoginController.username_.getUser());
-        for (int i = 1; i <= numberOfChunks; i++) {
-            ScpTo.dockerConnect("", "Vchunk" + chunkIds[i - 1] + ".bin", Containers[i - 1], "delete");
+        for (int i = 0; i < numberOfChunks; i++) {
+            try {
+                ScpTo.dockerConnect("", "Vchunk" + chunkIds[i] + ".bin", "localhost", 2221+i, "delete");
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Failed to delete chunk: " + chunkIds[i], e.getMessage());
+                edialogue("Delete Error", "Failed to delete chunk: " + chunkIds[i] + " — " + e.getMessage());
+                return;
+            }
         }
         myObj.deleteRecord("fileName_", name, username_.getUser());
     }
@@ -722,27 +756,71 @@ public class FilemanagerController {
 //            return;
 //        }
          if(!myobj.doesFileNameExist(getFileName(selectedFilePath))){
-             writeToFile(selectedFilePath, output.getText());
+             if(selectLocalFile){
+                 try {
+                     String path = pathToCreated;
+                     writeToFile(path+getFileName(selectedFilePath), output.getText());
+                 } catch (Exception e) {
+                        logger.log(Level.SEVERE, "Failed to write to file: " + pathToCreated, e.getMessage());
+                        edialogue("Write Error", "Failed to write to file: " + pathToCreated + " — " + e.getMessage());
+                        return;
+                 }
+             }
+             try {
+                 writeToFile(selectedFilePath, output.getText());
+             } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Failed to write to file: " + selectedFilePath, e.getMessage());
+                    edialogue("Write Error", "Failed to write to file: " + selectedFilePath + " — " + e.getMessage());
+                    return;
+             }
+             logger.log(Level.INFO, "File {0} does not exist in the database, writing to local file.", getFileName(selectedFilePath));
               dialogue("", "Upload to save changes");
               return;
          }
         if (myobj.doesItemExist("fileName_", getFileName(selectedFilePath), LoginController.username_.getUser(), "userName")) {
-            writeToFile(pathToCreated + File.separator + getFileName(selectedFilePath), output.getText());
-            String[] chunkIds = myobj.getChunkIds(getFileName(selectedFilePath), LoginController.username_.getUser());
-            for (int i = 1; i <= numberOfChunks; i++) {
-               // ScpTo.dockerConnect("", "Vchunk" + chunkIds[i - 1] + ".bin", Containers[i - 1], "delete");
+            try {
+                writeToFile(pathToCreated + File.separator + getFileName(selectedFilePath), output.getText());
+            } catch (Exception e) {
+               logger.log(Level.SEVERE, "Failed to write to file: " + pathToCreated + File.separator + getFileName(selectedFilePath), e.getMessage());
+                edialogue("Write Error", "Failed to write to file: " + pathToCreated + File.separator + getFileName(selectedFilePath) + " — " + e.getMessage());
+                return;
             }
-            splitFileIntoChunks(pathToCreated + File.separator + getFileName(selectedFilePath), pathToTemp);
-            myobj.updateDataTofileDB(LoginController.username_.getUser(), getFileName(selectedFilePath), fileSize, getFilePermissions(selectedFilePath), chunkUUIDs[0], chunkUUIDs[1], chunkUUIDs[2], chunkUUIDs[3], 123, calculateCRC32(selectedFilePath));
-            initialise2();
-            Log.addLog("User " + LoginController.username_.getUser() + " Updated file: " + getFileName(selectedFilePath), "log");
-//            selectedFilePath = null;
-//            cloudinput.setText("");
-//            output.setText("");
-            dialogue("", "File updated successfully on cloud !!");
-            writeToFile(selectedFilePath, output.getText());
-            if (doesFileExist(getFileName(pathToCreated + File.separator + getFileName(selectedFilePath)))) {
-                deleteFile(pathToCreated + File.separator + getFileName(selectedFilePath));
+            String[] chunkIds = myobj.getChunkIds(getFileName(selectedFilePath), LoginController.username_.getUser());
+            for (int i = 0; i < numberOfChunks; i++) {
+                try {
+                    ScpTo.dockerConnect("", "Vchunk" + chunkIds[i] + ".bin", "localhost", 2221+i, "delete");
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Failed to delete chunk: " + chunkIds[i], e.getMessage());
+                    edialogue("Update Error", "Failed to delete chunk: " + chunkIds[i] + " — " + e.getMessage());
+                    return;
+                }
+            }
+            if(selectedCloudFile){
+                splitFileIntoChunks(pathToCreated + File.separator + getFileName(selectedFilePath), pathToTemp);
+                myobj.updateDataTofileDB(LoginController.username_.getUser(), getFileName(selectedFilePath), fileSize, getFilePermissions(selectedFilePath), chunkUUIDs[0], chunkUUIDs[1], chunkUUIDs[2], chunkUUIDs[3], 123, calculateCRC32(pathToCreated+selectedFilePath));
+                initialise2();
+                Log.addLog("User " + LoginController.username_.getUser() + " Updated file: " + getFileName(selectedFilePath), "log");
+                dialogue("", "File updated successfully on cloud !!");
+                if (doesFileExist(getFileName(pathToCreated + File.separator + getFileName(selectedFilePath)))) {
+                    deleteFile(pathToCreated + File.separator + getFileName(selectedFilePath));
+                }
+            }else{
+                splitFileIntoChunks(pathToCreated + File.separator + getFileName(selectedFilePath), pathToTemp);
+                myobj.updateDataTofileDB(LoginController.username_.getUser(), getFileName(selectedFilePath), fileSize, getFilePermissions(selectedFilePath), chunkUUIDs[0], chunkUUIDs[1], chunkUUIDs[2], chunkUUIDs[3], 123, calculateCRC32(selectedFilePath));
+                initialise2();
+                Log.addLog("User " + LoginController.username_.getUser() + " Updated file: " + getFileName(selectedFilePath), "log");
+                logger.log(Level.INFO, "File {0} updated successfully on cloud.", getFileName(selectedFilePath));
+                dialogue("", "File updated successfully on cloud !!");
+                try {
+                    writeToFile(selectedFilePath, output.getText());
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Failed to write to file: " + selectedFilePath + File.separator + getFileName(selectedFilePath), e.getMessage());
+                    edialogue("Write Error", "Failed to write to file: " + selectedFilePath + File.separator + getFileName(selectedFilePath) + " — " + e.getMessage());
+                    return;
+                }
+                if (doesFileExist(getFileName(pathToCreated + File.separator + getFileName(selectedFilePath)))) {
+                    deleteFile(pathToCreated + File.separator + getFileName(selectedFilePath));
+                }
             }
         }
 
@@ -774,6 +852,7 @@ public class FilemanagerController {
             hand.fileCreating(userCommand);
             selectedFilePath = pathToCreated + userCommand;
             if (!"".equals(userCommand)) {
+                logger.log(Level.INFO, "Creating file: {0}", selectedFilePath);
                 dialogue("CREATING FILE", "Successful!, You can now write and update your file");
                 Log.addLog("User " + LoginController.username_.getUser() + " Created File: " + getFileName(selectedFilePath), "log");
             }
@@ -800,6 +879,7 @@ public class FilemanagerController {
                 myObj.addDataTofileDB(LoginController.username_.getUser(), getFileName(selectedFilePath), fileSize, getFilePermissions(selectedFilePath), chunkUUIDs[0], chunkUUIDs[1], chunkUUIDs[2], chunkUUIDs[3], "password", calculateCRC32(selectedFilePath));
                 initialise2();
                 Log.addLog("User " + LoginController.username_.getUser() + " Uploaded File: " + getFileName(selectedFilePath), "log");
+                logger.log(Level.INFO, "File uploaded successfully: {0}", getFileName(selectedFilePath));
                 if (doesFileExist(getFileName(pathToCreated + File.separator + getFileName(selectedFilePath)))) {
                     deleteFile(pathToCreated + File.separator + getFileName(selectedFilePath));
                     selectedFilePath = null;
@@ -809,6 +889,7 @@ public class FilemanagerController {
                     localFileLabel.setText("No local file selected");
                 }
             } else {
+                logger.log(Level.WARNING, "File already exists in the database: {0}", getFileName(selectedFilePath));
                 edialogue("CANNOT UPLOAD", "NO FILE SELECTED");
 
             }

@@ -108,16 +108,19 @@ public class SecondaryController {
             stage.setTitle("Terminal");
             stage.show();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Error loading terminal: " + e.getMessage());
+            edialogue("Error", "Failed to load terminal. Please try again later.");
         }
         
     };
     @FXML
     private void handleSyncNow() {
         syncStatusLabel.setText("Syncing...");
+        logger.info("Syncing started at " + LocalTime.now().withNano(0));
         try{
             if(MySQLDB.getConnection()==null){
                 edialogue("Sync Failed !!", "MySQL Cloud is Down !!");
+                logger.log(Level.SEVERE,"Sync Failed !! MySQL Cloud is Down !!");
                 syncStatusLabel.setText("Not Synced");
                 return;
             }
@@ -131,7 +134,7 @@ public class SecondaryController {
 
             syncTask.setOnSucceeded(e -> {
                 syncStatusLabel.setText("Sync completed at " + LocalTime.now().withNano(0));
-                // fileController.refreshFileList();
+                logger.info("Sync completed at " + LocalTime.now().withNano(0));
             });
 
             new Thread(syncTask).start();
@@ -156,7 +159,8 @@ public class SecondaryController {
             stage.setTitle("Update User profile");
             stage.show();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Error loading account settings: " + e.getMessage());
+            edialogue("Error", "Failed to load account settings. Please try again later.");
         }
         
     };
@@ -190,7 +194,8 @@ public class SecondaryController {
                 deleteDirectory(new File(directoryPath));
                 createDirectory(directoryPath);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.log(Level.SEVERE, "Error during logout: " + e.getMessage(), e.getCause());
+                edialogue("Logout Error", "An error occurred while logging out. Please try again.");
             }
         }
     }
@@ -199,9 +204,9 @@ public class SecondaryController {
         SessionManager session = SessionManager.getInstance();
         String username = session.getCurrentUser();
         if (username != null) {
-            session.updateActivity();
-            setupUserActivityListeners();
-            startAutoLogoutTimer();
+//            session.updateActivity();
+//            setupUserActivityListeners();
+//            startAutoLogoutTimer();
         } else {
             Stage stage = new Stage();
             FXMLLoader loader = new FXMLLoader();
@@ -248,6 +253,7 @@ public class SecondaryController {
             stage.setTitle("File Manager");
             stage.show();
         } catch (Exception ex) {
+            edialogue("Error", "Failed to load File Manager. Please try again later.");
             Logger.getLogger(SecondaryController.class.getName()).log(Level.SEVERE, ex.getMessage(), ex);
         }
     }
@@ -267,7 +273,7 @@ public class SecondaryController {
             // Finally, delete the directory itself
             directory.delete();
         } else {
-            System.err.println("Directory does not exist: " + directory.getAbsolutePath());
+            Logger.getLogger(SecondaryController.class.getName()).log(Level.WARNING, "Directory does not exist: " + directory.getAbsolutePath());
         }
     }
     
@@ -276,7 +282,7 @@ public class SecondaryController {
         if (!directory.exists()) {
             if (directory.mkdirs()) {
             } else {
-                System.err.println("Failed to create directory.");
+                Logger.getLogger(SecondaryController.class.getName()).log(Level.SEVERE, "Failed to create directory: " + directoryPath);
             }
         }
     }

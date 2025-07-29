@@ -64,6 +64,8 @@ public class RegisterController {
                 //controller.initialise(credentials);
                 String msg = "some data sent from Register Controller";
                 secondaryStage.setUserData(msg);
+                primaryStage.close();
+//                goToLogin(event);
             } else {
                 new Alert(Alert.AlertType.ERROR, "Passwords do not match").show();
                 return;

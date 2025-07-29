@@ -5,24 +5,22 @@ import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 
 public class ScpTo {
-    private static final String
-            USERNAME = "root";
-    private static final String PASSWORD = "ntu-user";
-    private static final int REMOTE_PORT = 22;
+    private static final String USERNAME = "root";
+    private static final String PASSWORD = "root";
+    private static final int REMOTE_PORT = 2222;
     private static final int SESSION_TIMEOUT = 10000;
     private static final int CHANNEL_TIMEOUT = 5000;
     public static final  int numberOfChunks = 4;
 
 
-    public static void dockerConnect(String localFile, String remoteFile, String remoteHost, String Process) {
-       
+    public static boolean dockerConnect(String localFile, String remoteFile, String remoteHost,int remotePort, String Process) throws Exception {
+
         Session jschSession = null;
 
         try {
             JSch jsch = new JSch();
-            jsch.setKnownHosts("/home/mkyong/.ssh/known_hosts");
-
-            jschSession = jsch.getSession(USERNAME, remoteHost, REMOTE_PORT);
+            jsch.setKnownHosts(System.getProperty("user.home") + "/.ssh/known_hosts");
+            jschSession = jsch.getSession(USERNAME, remoteHost, remotePort);
             java.util.Properties config = new java.util.Properties();
             config.put("StrictHostKeyChecking", "no");
             jschSession.setConfig(config);
@@ -40,25 +38,31 @@ public class ScpTo {
             if ("delete".equals(Process)) {
                 channelSftp.rm(remoteFile);
                 System.out.println("Remote file deleted.");
-            } 
+            }
             if ("create".equals(Process)) {
-                channelSftp.put("temp/" + localFile, remoteFile);
+                channelSftp.put( localFile, remoteFile);
                 System.out.println("Remote file created.");
-            } 
+            }
             if ("get".equals(Process)) {
                 channelSftp.get(remoteFile, "temp/" + localFile);
                 System.out.println("Remote file retrieved.");
-            } 
+            }
 
             channelSftp.exit();
 
-        } catch (JSchException | SftpException e) {
-            e.printStackTrace();
-        } finally {
+        }finally {
             if (jschSession != null) {
                 jschSession.disconnect();
             }
         }
+     return true;
+    }
 
+    public static void main(String[] args) {
+//      boolean test =  dockerConnect("test.txt", "test.txt", "localhost",2221, "delete");
+//       System.out.println("Operation successful: " + test);
+        for(int i = 1; i < 10 ; i++){
+            System.out.println(2220+i);
+        }
     }
 }

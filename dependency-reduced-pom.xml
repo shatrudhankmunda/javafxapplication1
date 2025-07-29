@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.mycompany</groupId>
-  <artifactId>JavaFXApplication1</artifactId>
+  <groupId>com.gui.app</groupId>
+  <artifactId>gui-app</artifactId>
   <version>1.0-SNAPSHOT</version>
   <build>
     <plugins>
@@ -20,7 +20,6 @@
                 <transformer>
                   <manifestEntries>
                     <Main-Class>com.mycompany.javafxapplication1.App</Main-Class>
-                    <Build-Number>123</Build-Number>
                   </manifestEntries>
                 </transformer>
               </transformers>
@@ -30,25 +29,39 @@
       </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.0</version>
+        <version>3.11.0</version>
         <configuration>
-          <release>11</release>
+          <release>17</release>
         </configuration>
       </plugin>
       <plugin>
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-maven-plugin</artifactId>
-        <version>0.0.4</version>
+        <version>0.0.8</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
         <configuration>
           <mainClass>com.mycompany.javafxapplication1.App</mainClass>
         </configuration>
       </plugin>
     </plugins>
   </build>
+  <dependencies>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>8.0.33</version>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
   <properties>
-    <maven.compiler.target>19</maven.compiler.target>
-    <exec.mainClass>com.mycompany.jsch.ScpTo</exec.mainClass>
-    <maven.compiler.source>19</maven.compiler.source>
+    <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <javafx.version>21</javafx.version>
   </properties>
 </project>
