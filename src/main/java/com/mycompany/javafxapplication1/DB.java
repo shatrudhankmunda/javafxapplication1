@@ -953,7 +953,8 @@ public class DB {
                 "             username TEXT PRIMARY KEY," +
                 "              password TEXT NOT NULL," +
                 "              created_ts DATETIME DEFAULT CURRENT_TIMESTAMP," +
-                "              updated_ts DATETIME DEFAULT CURRENT_TIMESTAMP " +
+                "              updated_ts DATETIME DEFAULT CURRENT_TIMESTAMP, " +
+                "              last_modified DATE " +
                 "              );";
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
@@ -966,7 +967,8 @@ public class DB {
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         username VARCHAR(100) NOT NULL,
                         login_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-                        logout_time DATETIME
+                        logout_time DATETIME,
+                        last_modified DATE
                     );
                 """;
         try (Statement stmt = conn.createStatement()) {
@@ -987,6 +989,7 @@ public class DB {
                     	"encryptionKey"	TEXT,
                     	"CRC32"	INTEGER,
                     	"dateOfCreation"	DATE,
+                    	"last_modified" DATE,
                     	"dateOfLastModification"	DATE,
                     	"Status"	TEXT DEFAULT 'Exists',
                     	FOREIGN KEY("userName") REFERENCES "Users"("name") ON DELETE CASCADE ON UPDATE CASCADE
@@ -1001,13 +1004,26 @@ public class DB {
         String sql = """
                     CREATE TABLE IF NOT EXISTS appLogs (
                           log TEXT,
-                          date_and_time DATETIME DEFAULT CURRENT_TIMESTAMP
+                          date_and_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                          last_modified DATE
                       )
                 """;
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
         }
     }
+    private static void createSyncMetadata(Connection conn) throws SQLException {
+        String sql = """
+                    CREATE TABLE IF NOT EXISTS sync_metadata (
+                           table_name TEXT PRIMARY KEY,
+                           last_sync TIMESTAMP
+                       );
+                """;
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+        }
+    }
+
     /**
      * Checks if a user with the given username already exists in the users table.
      * @param username the username to check
@@ -1034,6 +1050,7 @@ public class DB {
                 createFileInfoTable(conn);
                 createAppLogs(conn);
                 createSessionTable(conn);
+                createSyncMetadata(conn);
 
                 System.out.println("Local SQLite tables created (if not exist).");
             }

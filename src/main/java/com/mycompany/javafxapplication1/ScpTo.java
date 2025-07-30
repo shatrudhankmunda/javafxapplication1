@@ -6,7 +6,7 @@ import com.jcraft.jsch.ChannelSftp;
 
 public class ScpTo {
     private static final String USERNAME = "root";
-    private static final String PASSWORD = "root";
+    private static final String PASSWORD = "ntu-user";
     private static final int REMOTE_PORT = 2222;
     private static final int SESSION_TIMEOUT = 10000;
     private static final int CHANNEL_TIMEOUT = 5000;
